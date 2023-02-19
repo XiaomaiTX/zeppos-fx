@@ -1,0 +1,510 @@
+/**
+ * fx.js
+ * @description A library for providing simple animations in ZeppOS. 一个用于在ZeppOS中提供简单动画的库
+ * @version 1.0.0
+ * @date 2023/02/18
+ * @author CuberQAQ XiaomaiTX
+ * @license MIT
+ * https://github.com/XiaomaiTX/zppos-fx
+ *
+ * @class Fx Animations
+ * Provides two ways to use the preset and not to use the preset. 提供了使用预设和不使用预设两种方式
+ * A total of 31 presets are currently available, see @Fx.Style. 目前提供的预设共31种，详见下面的Fx.Style
+ * It's too much of a hassle not to use presets. 不使用预设太麻烦了 不如不用
+ * @example let fx = new Fx({params})
+ * let fx = new Fx({
+ *   begin: 100, // Initial value of function. 初始函数值
+ *   end: 200,   // Target value of function. 目标函数值
+ *   fps: 60,    // FPS. 帧率
+ *   time: 1,    // Total during time (s). 总时长(秒)
+ *   style: Fx.Styles.EASE_IN_OUT_QUAD, // Types of animation presets used, seeing @Fx.Style. 预设类型 见下面的Fx.Style
+ *   onStop() {console.log("anim stop")}, // Callback function at the end of the animation. 动画结束后的回调函数
+ *
+ *   // Callback function for each frame, the parameter is the current function value, the value range is [begin, end]
+ *   // 每一帧的回调函数，参数为当前函数值，取值范围为[begin, end]
+ *   func: result => text.setProperty(hmUI.prop.X, result)
+ * })
+ * fx.restart() // Replay animation can be called multiple times. 播放动画 可以重复多次调用
+ *
+ * @function getMixColor()
+ * It also provides a @function getMixColor() designed for color gradients, which can get the middle color of two colors.
+ * 还提供了一个专为颜色渐变设计的函数getMixColor，可以获取两个颜色的中间色
+ */
+
+/**
+ * Basic const from Math
+ */
+const pow = Math.pow;
+const sqrt = Math.sqrt;
+const sin = Math.sin;
+const cos = Math.cos;
+const PI = Math.PI;
+
+const bounceOut = function (x) {
+  /**
+   * Returns the bounce out result of x
+   * @param {number} x
+   * @returns {number}
+   */
+  const n1 = 7.5625;
+  const d1 = 2.75;
+
+  if (x < 1 / d1) {
+    return n1 * x * x;
+  } else if (x < 2 / d1) {
+    return n1 * (x -= 1.5 / d1) * x + 0.75;
+  } else if (x < 2.5 / d1) {
+    return n1 * (x -= 2.25 / d1) * x + 0.9375;
+  } else {
+    return n1 * (x -= 2.625 / d1) * x + 0.984375;
+  }
+};
+
+export class Fx {
+  /**
+   * @class Fx
+   *
+   * @constructor 构造函数
+   *
+   * @description Provide animations method. 提供动画的方法，使用例子上述已说明
+   *
+   * @param {number} delay 延迟执行
+   * @param {number} begin 初始函数值
+   * @param {number} end 目标函数值
+   * @param {number} (已弃用) x_start 函数开始的x坐标
+   * @param {number} (已弃用) x_end 函数结束的x坐标
+   * @param {number} time 执行总时间
+   * @param {*} (已弃用) fx x => y 动画函数
+   * @param {*} func 执行的函数，每次的y值会作为第一个参数传给func
+   * @param {number} fps 动画帧率
+   * @param {*} enable
+   * @param {string} style 内置预设类型
+   * @param {*} onStop 结束后执行的函数
+   */
+  constructor({
+    delay,
+    begin,
+    end,
+    x_start,
+    x_end,
+    time,
+    fx,
+    func,
+    fps,
+    enable,
+    style,
+    onStop,
+  }) {
+    if (fx) {
+      // 不使用预设
+      this.x_start = x_start * 1.0;
+      this.x_end = x_end * 1.0;
+      this.fx = fx;
+      this.speed = (x_end - x_start) / (time * fps);
+    } else {
+      // 使用预设
+      this.begin = begin;
+      this.end = end;
+      this.fps = fps;
+      this.time = time;
+      switch (style) {
+        case Fx.Styles.LINEAR:
+          this.fx = (x) => fx_inside.LINEAR(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_QUAD:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_QUAD(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_QUAD:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_QUAD(x, begin, end, this.fps * this.time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_QUAD:
+          this.fx = (x) => fx_inside.EASE_OUT_QUAD(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+      }
+    }
+    this.per_clock = 1000 / fps;
+    this.delay = delay;
+    this.func = func;
+    this.x_now = this.x_start;
+    this.onStop = onStop;
+    if (enable == undefined) {
+      this.enable = true;
+    } else {
+      this.enable = enable;
+    }
+    this.timer = null;
+
+    this.setEnable(this.enable);
+  }
+  restart() {
+    this.x_now = this.x_start;
+    this.setEnable(false);
+    this.setEnable(true);
+  }
+  setEnable(enable) {
+    if (enable) {
+      this.registerTimer();
+    } else {
+      if (this.timer) {
+        timer.stopTimer(this.timer);
+        this.timer = null;
+      }
+    }
+  }
+  registerTimer() {
+    this.timer = timer.createTimer(
+      this.delay ? this.delay : 0,
+      this.per_clock,
+      (option) => {
+        this.func(this.fx((this.x_now += this.speed)));
+        if (this.x_now > this.x_end) {
+          //防止不到终点
+          this.func(this.fx(this.x_end));
+          //执行onStop
+          if (this.onStop != undefined) {
+            this.onStop();
+          }
+          //停止timer
+          timer.stopTimer(this.timer);
+          this.timer = null;
+          this.enable = false;
+        }
+      },
+      {}
+    );
+  }
+  static getMixColor(color0, color1, percentage) {
+    /**
+     * @function getMixColor()
+     * @description Get the middle color of two colors.
+     * @param {string} Mix color 1. 初始颜色1 (6位十六进制)
+     * @param {string} Mix color 2. 初始颜色2 (6位十六进制)
+     * @param {number} Mix Percentage(range [0,1], the smaller the closer to color0). 混合百分比(范围[0,1]，越小越接近color0)
+     */
+    let r0 = color0 & 0xff0000,
+      g0 = color0 & 0x00ff00,
+      b0 = color0 & 0x0000ff;
+    let r1 = color1 & 0xff0000,
+      g1 = color1 & 0x00ff00,
+      b1 = color1 & 0x0000ff;
+    return (
+      (Math.floor((r1 - r0) * percentage + r0) & 0xff0000) +
+      (Math.floor((g1 - g0) * percentage + g0) & 0x00ff00) +
+      (Math.floor((b1 - b0) * percentage + b0) & 0x0000ff)
+    );
+  }
+  static getMixBorder(border1, border2, percentage) {
+    return {
+      x: border1.x + (border2.x - border1.x) * percentage,
+      y: border1.y + (border2.y - border1.y) * percentage,
+      x: border1.w + (border2.w - border1.w) * percentage,
+      x: border1.h + (border2.h - border1.h) * percentage,
+    };
+  }
+}
+Fx.Styles = {
+  /**
+   * List of preset styles
+   * @example EXAMPLE: indexNumber,
+   */
+  LINEAR: 0,
+  EASE_IN_SINE: 1,
+  EASE_OUT_SINE: 2,
+  EASE_IN_OUT_SINE: 3,
+  EASE_IN_QUAD: 4,
+  EASE_OUT_QUAD: 5,
+  EASE_IN_OUT_QUAD: 6,
+  EASE_IN_CUBIC: 7,
+  EASE_OUT_CUBIC: 8,
+  EASE_IN_OUT_CUBIC: 9,
+  EASE_IN_QUART: 10,
+  EASE_OUT_QUART: 11,
+  EASE_IN_OUT_QUART: 12,
+  EASE_IN_QUINT: 13,
+  EASE_OUT_QUINT: 14,
+  EASE_IN_OUT_QUINT: 15,
+  EASE_IN_EXPO: 16,
+  EASE_OUT_EXPO: 17,
+  EASE_IN_OUT_EXPO: 18,
+  EASE_IN_CIRC: 19,
+  EASE_OUT_CIRC: 20,
+  EASE_IN_OUT_CIRC: 21,
+  EASE_IN_BACK: 22,
+  EASE_OUT_BACK: 23,
+  EASE_IN_OUT_BACK: 24,
+  EASE_IN_ELASTIC: 25,
+  EASE_OUT_ELASTIC: 26,
+  EASE_IN_OUT_ELASTIC: 27,
+  EASE_IN_BOUNCE: 28,
+  EASE_OUT_BOUNCE: 29,
+  EASE_IN_OUT_BOUNCE: 31,
+};
+const fx_inside = {
+  // TODO Add more style
+
+  EXAMPLE: function (now_x, begin, end, max_x) {
+    /**
+     * An example of adding style for fx.js.
+     * 示例：如何给 fx.js 编写新的预设
+     * @param {number} Current frame rate. 当前已抵达的帧数
+     * @param {number} Initial value of function. 初始函数值
+     * @param {number} Target value of function. 目标函数值
+     * @param {number} Target value of frame rate. 总帧数
+     * @returns {number} New frame rate. 新的当前帧数
+     */
+    function math_func(x) {
+      /**
+       * math_func()
+       * Use this function to draw an animated track.
+       * 用于绘制动画运动轨迹
+       * @param {number} Initial value. 传入自变量
+       * @returns {number} Target value. 传出函数值
+       */
+
+      return x;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+    /**
+     * @returns {number}
+     * begin: Initial Value.
+     * math_func(now_x / max_x): Perform percentage calculations.
+     * (end - begin) * math_func(now_x / max_x): Change value.
+     */
+  },
+
+  // The following presets are available for reference https://easings.net/
+  // 以下预设可参考 https://easings.net/
+
+  LINEAR: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_SINE: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 - cos((x * PI) / 2);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_SINE: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return sin((x * PI) / 2);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_SINE: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return -(cos(PI * x) - 1) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_QUAD: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x * x;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_QUAD: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 - (1 - x) * (1 - x);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_QUAD: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_CUBIC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x * x * x;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_CUBIC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 - pow(1 - x, 3);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_CUBIC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x < 0.5 ? 4 * x * x * x : 1 - pow(-2 * x + 2, 3) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_QUART: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x * x * x * x;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_QUART: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 - pow(1 - x, 4);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_QUART: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x < 0.5 ? 8 * x * x * x * x : 1 - pow(-2 * x + 2, 4) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_QUINT: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x * x * x * x * x;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_QUINT: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 - pow(1 - x, 4);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_QUINT: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x < 0.5 ? 16 * x * x * x * x * x : 1 - pow(-2 * x + 2, 5) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_EXPO: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x === 0 ? 0 : pow(2, 10 * x - 10);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_EXPO: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x === 1 ? 1 : 1 - pow(2, -10 * x);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_EXPO: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x === 0
+        ? 0
+        : x === 1
+        ? 1
+        : x < 0.5
+        ? pow(2, 20 * x - 10) / 2
+        : (2 - pow(2, -20 * x + 10)) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_CIRC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 - sqrt(1 - pow(x, 2));
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_CIRC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return sqrt(1 - pow(x - 1, 2));
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_CIRC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x < 0.5
+        ? (1 - sqrt(1 - pow(2 * x, 2))) / 2
+        : (sqrt(1 - pow(-2 * x + 2, 2)) + 1) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_BACK: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1.70158 + 1 * x * x * x - 1.70158 * x * x;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_BACK: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 + 1.70158 + 1 * pow(x - 1, 3) + 1.70158 * pow(x - 1, 2);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_BACK: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x < 0.5
+        ? (pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) /
+            2
+        : (pow(2 * x - 2, 2) *
+            ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) +
+            2) /
+            2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_ELASTIC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x === 0
+        ? 0
+        : x === 1
+        ? 1
+        : -pow(2, 10 * x - 10) * sin(((x * 10 - 10.75) * (2 * PI)) / 3);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_ELASTIC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x === 0
+        ? 0
+        : x === 1
+        ? 1
+        : pow(2, -10 * x) * sin(((x * 10 - 0.75) * (2 * PI)) / 3) + 1;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_ELASTIC: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x === 0
+        ? 0
+        : x === 1
+        ? 1
+        : x < 0.5
+        ? -(pow(2, 20 * x - 10) * sin(((20 * x - 11.125) * (2 * PI)) / 4.5)) / 2
+        : (pow(2, -20 * x + 10) * sin(((20 * x - 11.125) * (2 * PI)) / 4.5)) /
+            2 +
+          1;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_BOUNCE: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return 1 - bounceOut(1 - x);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_OUT_BOUNCE: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return bounceOut(x);
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+  EASE_IN_OUT_BOUNCE: function (now_x, begin, end, max_x) {
+    function math_func(x) {
+      return x < 0.5
+        ? (1 - bounceOut(1 - 2 * x)) / 2
+        : (1 + bounceOut(2 * x - 1)) / 2;
+    }
+    return begin + (end - begin) * math_func(now_x / max_x);
+  },
+};
