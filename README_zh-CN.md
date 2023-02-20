@@ -18,7 +18,9 @@
   <p align="center">
     一个用于在ZeppOS中提供简单动画的库
     <br />
-    <a href="https://github.com/XiaomaiTX/zeppos-fx/blob/master/README.md"><strong>English Docu »</strong></a>
+    <a href="https://github.com/XiaomaiTX/zeppos-fx/blob/master/README.md"><strong>English Document »</strong></a>
+    <br />
+    <p>我在写文档的时候优先用的英语哦~建议优先读完英文版 当然，中文版更方便大部分大陆开发者使用习惯
     <br />
     <br />
     <a href="https://github.com/XiaomaiTX/zeppos-fx/releases">下载稳定版</a>
@@ -81,36 +83,56 @@ emmm，你还需要一个代码编辑器（比如微软的VSCode），以及有�
 
 1. 使用fx.js之前，你需要准备一个 ZeppOS 小程序项目，如果还没有创建，你可以参考这部分的文档 [ZeppOS quick start](https://docs.zepp.com/docs/guides/quick-start/).
 
-2. Please download the latest `fx.js` file in the [Releases](https://github.com/XiaomaiTX/zeppos-fx/releases), and place `fx.js` in the `utils/` directory of the root of the applet
+2. 请前往 [Releases](https://github.com/XiaomaiTX/zeppos-fx/releases) 下载最新稳定版fx.js，然后把fx.js放到项目根目录的 `utils/` 目录中
 
-3. Add a reference to fx.js in the project
+3. 在项目中添加对fx.js的引用
+
 
 ```js
-import { Fx } from "../utils/fx"; // Replace with the path to your fx.js
+import { Fx } from "../utils/fx"; // 这里换成fx.js相对于该文件的相对路径
 ```
 
-At this point, you're ready to use the `fx.js` library
+至此，你可以尽情享受fx.js带来的动画效果了，什么？不知道怎么用？那就看看Usage吧
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-## Usage
+## 如何使用
+
+可以参考这个简单的示例，如果正常运行，文本控件的x值应该由100变为200，即向右进行非线性移动
+如果有什么问题可以提交issue或联系XiaomaiTX，但是在发问前请确保自己已经经过思考
+当然，你可以先看看我博客的文章[《提问的智慧》](https://blog.uuu4.cn/archives/12/)
 
 ```js
+    const text = hmUI.createWidget(hmUI.widget.TEXT, {
+      // 创建一个简单的 TEXT 控件
+      x: 100,
+      y: 120,
+      w: 288,
+      h: 46,
+      color: 0xffffff,
+      text_size: 36,
+      align_h: hmUI.align.CENTER_H,
+      align_v: hmUI.align.CENTER_V,
+      text_style: hmUI.text_style.NONE,
+      text: 'HELLO ZEPPOS'
+    })
+
 let fx = new Fx({
-    begin: 100, // Initial value of function.
-    end: 200, // Target value of function. 
-    fps: 60, // FPS. 
-    time: 1, // Total during time (s). 
-     style: Fx.Styles.EASE_IN_OUT_QUAD, // Types of animation presets used, seeing @Fx.Style. 
+    begin: 100, // 初始函数值
+    end: 200, // 目标函数值
+    fps: 60, // 帧率
+    time: 1, // 总时长(秒)
+     style: Fx.Styles.EASE_IN_OUT_QUAD, //   预设类型 见fx.js中的Fx.Style
+
      onStop() {
        console.log("anim stop");
-     }, // Callback function at the end of the animation. 
+     }, // 动画结束后的回调函数
 
-     // Callback function for each frame, the parameter is the current function value, the value range is [begin, end]
+     // 每一帧的回调函数，参数为当前函数值，取值范围为[begin, end]
       func: (result) => text.setProperty(hmUI.prop.X, result),
 });
-fx.restart(); // Replay animation can be called multiple times. 
+fx.restart(); // 播放动画 可以重复多次调用
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -118,11 +140,13 @@ fx.restart(); // Replay animation can be called multiple times.
 
 ## Roadmap
 
-- [x] Add basic presets
-- [x] Add function to mix colors
-- [ ] Add more presets
-- [ ] Multi-language Support for README
-  - [ ] Chinese
+- [x] 添加一些基本的动画预设
+- [x] 添加颜色混合动画函数
+- [ ] 添加更多的预设（咕咕咕，靠大家的贡献啦~）
+- [ ] 为README编写多语言适配（感觉中英就够了？）
+  - [x] English
+  - [ ] 中文
+
 
 See the [open issues](https://github.com/XiaomaiTX/zeppos-fx/issues) for a full list of proposed features (and known issues).
 

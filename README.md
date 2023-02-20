@@ -93,10 +93,26 @@ At this point, you're ready to use the `fx.js` library
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-
 ## Usage
 
+You can refer to the following example to use this library and you should get the expected results like this:
+The position of the text moves from x=100 to x=200 with a non-linear motion effect
+
 ```js
+    const text = hmUI.createWidget(hmUI.widget.TEXT, {
+      // create a text widget
+      x: 100,
+      y: 120,
+      w: 288,
+      h: 46,
+      color: 0xffffff,
+      text_size: 36,
+      align_h: hmUI.align.CENTER_H,
+      align_v: hmUI.align.CENTER_V,
+      text_style: hmUI.text_style.NONE,
+      text: 'HELLO ZEPPOS'
+    })
+
 let fx = new Fx({
     begin: 100, // Initial value of function.
     end: 200, // Target value of function. 
@@ -122,7 +138,8 @@ fx.restart(); // Replay animation can be called multiple times.
 - [x] Add function to mix colors
 - [ ] Add more presets
 - [ ] Multi-language Support for README
-  - [ ] Chinese
+  - [x] English
+  - [ ] 中文
 
 See the [open issues](https://github.com/XiaomaiTX/zeppos-fx/issues) for a full list of proposed features (and known issues).
 
