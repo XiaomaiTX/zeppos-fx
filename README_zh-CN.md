@@ -156,7 +156,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 XiaomaiTX - i@lenrome.cn
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+Project Link: [https://github.com/XiaomaiTX/zeppos-fx](https://github.com/XiaomaiTX/zeppos-fx)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
