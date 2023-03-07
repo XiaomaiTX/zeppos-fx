@@ -1,8 +1,8 @@
 /**
  * fx.js
  * @description A library for providing simple animations in ZeppOS. 一个用于在ZeppOS中提供简单动画的库
- * @version 1.0.0
- * @date 2023/02/18
+ * @version 1.0.1
+ * @date 2023/03/07
  * @author CuberQAQ XiaomaiTX
  * @license MIT
  * https://github.com/XiaomaiTX/zppos-fx
@@ -31,14 +31,6 @@
  * 还提供了一个专为颜色渐变设计的函数getMixColor，可以获取两个颜色的中间色
  */
 
-/**
- * Basic const from Math
- */
-const pow = Math.pow;
-const sqrt = Math.sqrt;
-const sin = Math.sin;
-const cos = Math.cos;
-const PI = Math.PI;
 
 const bounceOut = function (x) {
   /**
@@ -114,6 +106,37 @@ export class Fx {
           this.x_end = fps * time;
           this.speed = 1;
           break;
+        case Fx.Styles.EASE_IN_SINE:
+          this.fx = (x) => fx_inside.EASE_IN_SINE(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_SINE:
+          this.fx = (x) => fx_inside.EASE_OUT_SINE(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_SINE:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_SINE(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_QUAD:
+          this.fx = (x) => fx_inside.EASE_IN_QUAD(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_QUAD:
+          this.fx = (x) => fx_inside.EASE_OUT_QUAD(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
         case Fx.Styles.EASE_IN_OUT_QUAD:
           this.fx = (x) =>
             fx_inside.EASE_IN_OUT_QUAD(x, begin, end, fps * time);
@@ -121,15 +144,155 @@ export class Fx {
           this.x_end = fps * time;
           this.speed = 1;
           break;
-        case Fx.Styles.EASE_IN_QUAD:
-          this.fx = (x) =>
-            fx_inside.EASE_IN_QUAD(x, begin, end, this.fps * this.time);
+        case Fx.Styles.EASE_IN_CUBIC:
+          this.fx = (x) => fx_inside.EASE_IN_CUBIC(x, begin, end, fps * time);
           this.x_start = 0;
           this.x_end = fps * time;
           this.speed = 1;
           break;
-        case Fx.Styles.EASE_OUT_QUAD:
-          this.fx = (x) => fx_inside.EASE_OUT_QUAD(x, begin, end, fps * time);
+        case Fx.Styles.EASE_OUT_CUBIC:
+          this.fx = (x) => fx_inside.EASE_OUT_CUBIC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_CUBIC:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_CUBIC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_QUART:
+          this.fx = (x) => fx_inside.EASE_IN_QUART(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_QUART:
+          this.fx = (x) => fx_inside.EASE_OUT_QUART(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_QUART:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_QUART(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_QUINT:
+          this.fx = (x) => fx_inside.EASE_IN_QUINT(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_QUINT:
+          this.fx = (x) => fx_inside.EASE_OUT_QUINT(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_QUINT:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_QUINT(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_EXPO:
+          this.fx = (x) => fx_inside.EASE_IN_EXPO(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_EXPO:
+          this.fx = (x) => fx_inside.EASE_OUT_EXPO(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_EXPO:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_EXPO(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_CIRC:
+          this.fx = (x) => fx_inside.EASE_IN_CIRC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_CIRC:
+          this.fx = (x) => fx_inside.EASE_OUT_CIRC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_CIRC:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_CIRC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_BACK:
+          this.fx = (x) => fx_inside.EASE_IN_BACK(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_BACK:
+          this.fx = (x) => fx_inside.EASE_OUT_BACK(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_BACK:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_BACK(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_ELASTIC:
+          this.fx = (x) => fx_inside.EASE_IN_ELASTIC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_ELASTIC:
+          this.fx = (x) =>
+            fx_inside.EASE_OUT_ELASTIC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_ELASTIC:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_ELASTIC(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_BOUNCE:
+          this.fx = (x) => fx_inside.EASE_IN_BOUNCE(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_OUT_BOUNCE:
+          this.fx = (x) => fx_inside.EASE_OUT_BOUNCE(x, begin, end, fps * time);
+          this.x_start = 0;
+          this.x_end = fps * time;
+          this.speed = 1;
+          break;
+        case Fx.Styles.EASE_IN_OUT_BOUNCE:
+          this.fx = (x) =>
+            fx_inside.EASE_IN_OUT_BOUNCE(x, begin, end, fps * time);
           this.x_start = 0;
           this.x_end = fps * time;
           this.speed = 1;
@@ -256,36 +419,6 @@ Fx.Styles = {
 const fx_inside = {
   // TODO Add more style
 
-  EXAMPLE: function (now_x, begin, end, max_x) {
-    /**
-     * An example of adding style for fx.js.
-     * 示例：如何给 fx.js 编写新的预设
-     * @param {number} Current frame rate. 当前已抵达的帧数
-     * @param {number} Initial value of function. 初始函数值
-     * @param {number} Target value of function. 目标函数值
-     * @param {number} Target value of frame rate. 总帧数
-     * @returns {number} New frame rate. 新的当前帧数
-     */
-    function math_func(x) {
-      /**
-       * math_func()
-       * Use this function to draw an animated track.
-       * 用于绘制动画运动轨迹
-       * @param {number} Initial value. 传入自变量
-       * @returns {number} Target value. 传出函数值
-       */
-
-      return x;
-    }
-    return begin + (end - begin) * math_func(now_x / max_x);
-    /**
-     * @returns {number}
-     * begin: Initial Value.
-     * math_func(now_x / max_x): Perform percentage calculations.
-     * (end - begin) * math_func(now_x / max_x): Change value.
-     */
-  },
-
   // The following presets are available for reference https://easings.net/
   // 以下预设可参考 https://easings.net/
 
@@ -297,19 +430,19 @@ const fx_inside = {
   },
   EASE_IN_SINE: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return 1 - cos((x * PI) / 2);
+      return 1 - cos((x * Math.PI) / 2);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_OUT_SINE: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return sin((x * PI) / 2);
+      return sin((x * Math.PI) / 2);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_OUT_SINE: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return -(cos(PI * x) - 1) / 2;
+      return -(cos(Math.PI * x) - 1) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -327,7 +460,7 @@ const fx_inside = {
   },
   EASE_IN_OUT_QUAD: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+      return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -339,13 +472,13 @@ const fx_inside = {
   },
   EASE_OUT_CUBIC: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return 1 - pow(1 - x, 3);
+      return 1 - Math.pow(1 - x, 3);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_OUT_CUBIC: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return x < 0.5 ? 4 * x * x * x : 1 - pow(-2 * x + 2, 3) / 2;
+      return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -357,13 +490,13 @@ const fx_inside = {
   },
   EASE_OUT_QUART: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return 1 - pow(1 - x, 4);
+      return 1 - Math.pow(1 - x, 4);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_OUT_QUART: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return x < 0.5 ? 8 * x * x * x * x : 1 - pow(-2 * x + 2, 4) / 2;
+      return x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -375,25 +508,25 @@ const fx_inside = {
   },
   EASE_OUT_QUINT: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return 1 - pow(1 - x, 4);
+      return 1 - Math.pow(1 - x, 4);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_OUT_QUINT: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return x < 0.5 ? 16 * x * x * x * x * x : 1 - pow(-2 * x + 2, 5) / 2;
+      return x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_EXPO: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return x === 0 ? 0 : pow(2, 10 * x - 10);
+      return x === 0 ? 0 : Math.pow(2, 10 * x - 10);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_OUT_EXPO: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return x === 1 ? 1 : 1 - pow(2, -10 * x);
+      return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -404,28 +537,28 @@ const fx_inside = {
         : x === 1
         ? 1
         : x < 0.5
-        ? pow(2, 20 * x - 10) / 2
-        : (2 - pow(2, -20 * x + 10)) / 2;
+        ? Math.pow(2, 20 * x - 10) / 2
+        : (2 - Math.pow(2, -20 * x + 10)) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_CIRC: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return 1 - sqrt(1 - pow(x, 2));
+      return 1 - Math.sqrt(1 - Math.pow(x, 2));
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_OUT_CIRC: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return sqrt(1 - pow(x - 1, 2));
+      return Math.sqrt(1 - Math.pow(x - 1, 2));
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_OUT_CIRC: function (now_x, begin, end, max_x) {
     function math_func(x) {
       return x < 0.5
-        ? (1 - sqrt(1 - pow(2 * x, 2))) / 2
-        : (sqrt(1 - pow(-2 * x + 2, 2)) + 1) / 2;
+        ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
+        : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -437,16 +570,16 @@ const fx_inside = {
   },
   EASE_OUT_BACK: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return 1 + 1.70158 + 1 * pow(x - 1, 3) + 1.70158 * pow(x - 1, 2);
+      return 1 + 1.70158 + 1 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_OUT_BACK: function (now_x, begin, end, max_x) {
     function math_func(x) {
       return x < 0.5
-        ? (pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) /
+        ? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) /
             2
-        : (pow(2 * x - 2, 2) *
+        : (Math.pow(2 * x - 2, 2) *
             ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) +
             2) /
             2;
@@ -459,7 +592,7 @@ const fx_inside = {
         ? 0
         : x === 1
         ? 1
-        : -pow(2, 10 * x - 10) * sin(((x * 10 - 10.75) * (2 * PI)) / 3);
+        : -Math.pow(2, 10 * x - 10) * sin(((x * 10 - 10.75) * (2 * Math.PI)) / 3);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -469,7 +602,7 @@ const fx_inside = {
         ? 0
         : x === 1
         ? 1
-        : pow(2, -10 * x) * sin(((x * 10 - 0.75) * (2 * PI)) / 3) + 1;
+        : Math.pow(2, -10 * x) * sin(((x * 10 - 0.75) * (2 * Math.PI)) / 3) + 1;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -480,8 +613,8 @@ const fx_inside = {
         : x === 1
         ? 1
         : x < 0.5
-        ? -(pow(2, 20 * x - 10) * sin(((20 * x - 11.125) * (2 * PI)) / 4.5)) / 2
-        : (pow(2, -20 * x + 10) * sin(((20 * x - 11.125) * (2 * PI)) / 4.5)) /
+        ? -(Math.pow(2, 20 * x - 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) / 2
+        : (Math.pow(2, -20 * x + 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) /
             2 +
           1;
     }
