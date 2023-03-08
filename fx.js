@@ -29,6 +29,56 @@
  * @function getMixColor()
  * It also provides a @function getMixColor() designed for color gradients, which can get the middle color of two colors.
  * 还提供了一个专为颜色渐变设计的函数getMixColor，可以获取两个颜色的中间色
+ * @example ```js
+ * let rect = hmUI.createWidget(hmUI.widget.FILL_RECT, {
+ *   x: 0,
+ *   y: 0,
+ *   w: 50,
+ *   h: 100,
+ *   radius: 10,
+ *   color: 0xff3232,
+ * });
+ * let fx = new Fx({
+ *   begin: 0, // 初始函数值
+ *   end: 1, // 结束函数值
+ *   fps: 60, // 帧率
+ *   time: 1, // 总时长(秒)
+ *   style: Fx.Styles.EASE_IN_OUT_QUAD, // 预设类型 见注释第7-9行
+ *   onStop() {
+ *     console.log("anim stop");
+ *   }, // 动画结束后的回调函数
+ *   // 每一帧的回调函数，参数为当前函数值，取值范围为[begin, end]
+ *   func: (result) => {
+ *     rect.setProperty(
+ *       hmUI.prop.COLOR,
+ *       Fx.getMixColor(0xff3232, 0x3232ff, result)
+ *     );
+ *     rect.setProperty(hmUI.prop.MORE, {
+ *       ...Fx.getMixBorder(
+ *         {
+ *           x: 0,
+ *           y: 0,
+ *           w: 50,
+ *           h: 100,
+ *           radius: 10,
+ *         },
+ *         {
+ *           x: 150,
+ *           y: 200,
+ *           w: 200,
+ *           h: 250,
+ *           radius: 75
+ *         },
+ *         result
+ *       ),
+ *     });
+ *   },
+ *   // useSmoothTimer: false // 若不需要稳定的计时器可取消注释
+ * });
+ * fx.restart(); // 播放动画 可以重复多次调用
+ * ```
+ * 
+ * 
  */
 
 
@@ -86,6 +136,8 @@ export class Fx {
     enable,
     style,
     onStop,
+    outTimer,
+    useSmoothTimer,
   }) {
     if (fx) {
       // 不使用预设
@@ -304,14 +356,11 @@ export class Fx {
     this.func = func;
     this.x_now = this.x_start;
     this.onStop = onStop;
-    if (enable == undefined) {
-      this.enable = true;
-    } else {
-      this.enable = enable;
-    }
-    this.timer = null;
-
-    this.setEnable(this.enable);
+    this._enable = enable | false;
+    this._timer = null;
+    this._outTimer = outTimer | false;
+    this._useSmoothTimer = useSmoothTimer | true;
+    this.setEnable(this._enable);
   }
   restart() {
     this.x_now = this.x_start;
@@ -319,20 +368,21 @@ export class Fx {
     this.setEnable(true);
   }
   setEnable(enable) {
+    this._enable = enable;
     if (enable) {
-      this.registerTimer();
+      if (!this._outTimer) {
+        this.registerTimer();
+      }
     } else {
-      if (this.timer) {
-        timer.stopTimer(this.timer);
-        this.timer = null;
+      if (this._timer) {
+        timer.stopTimer(this._timer);
+        this._timer = null;
       }
     }
   }
-  registerTimer() {
-    this.timer = timer.createTimer(
-      this.delay ? this.delay : 0,
-      this.per_clock,
-      (option) => {
+  step() {
+    if (this._outTimer) {
+      if (this._enable) {
         this.func(this.fx((this.x_now += this.speed)));
         if (this.x_now > this.x_end) {
           //防止不到终点
@@ -341,41 +391,78 @@ export class Fx {
           if (this.onStop != undefined) {
             this.onStop();
           }
-          //停止timer
-          timer.stopTimer(this.timer);
-          this.timer = null;
-          this.enable = false;
+          this._enable = false;
         }
-      },
-      {}
-    );
+      }
+    }
   }
-  static getMixColor(color0, color1, percentage) {
-    /**
+  registerTimer() {
+    let callback = (option) => {
+      this.func(this.fx((this.x_now += this.speed)));
+      if (this.x_now > this.x_end) {
+        //防止不到终点
+        this.func(this.fx(this.x_end));
+        //执行onStop
+        if (this.onStop != undefined) {
+          this.onStop();
+        }
+        //停止timer
+        this._useSmoothTimer
+          ? stopSmoothTimer(this._timer)
+          : timer.stopTimer(this._timer);
+        this._timer = null;
+        this._enable = false;
+      }
+    };
+    this._timer = this._useSmoothTimer
+      ? createSmoothTimer(
+        this.delay ? this.delay : 0,
+        this.per_clock,
+        callback,
+        {},
+        SmoothTimer.modes.DYNAMIC_SMOOTH
+      )
+      : timer.createTimer(
+        this.delay ? this.delay : 0,
+        this.per_clock,
+        callback,
+        {}
+      );
+  }
+  /**
      * @function getMixColor()
      * @description Get the middle color of two colors.
-     * @param {string} Mix color 1. 初始颜色1 (6位十六进制)
-     * @param {string} Mix color 2. 初始颜色2 (6位十六进制)
-     * @param {number} Mix Percentage(range [0,1], the smaller the closer to color0). 混合百分比(范围[0,1]，越小越接近color0)
+     * @param {number} color 1. 初始颜色1 (6位十六进制)
+     * @param {number} color 2. 初始颜色2 (6位十六进制)
+     * @param {number} percentage (range [0,1], the smaller the closer to color0). 混合百分比(范围[0,1]，越小越接近color0)
      */
-    let r0 = color0 & 0xff0000,
-      g0 = color0 & 0x00ff00,
-      b0 = color0 & 0x0000ff;
-    let r1 = color1 & 0xff0000,
-      g1 = color1 & 0x00ff00,
-      b1 = color1 & 0x0000ff;
+  static getMixColor(color1, color2, percentage) {
+    let r0 = color1 & 0xff0000,
+      g0 = color1 & 0x00ff00,
+      b0 = color1 & 0x0000ff;
+    let r1 = color2 & 0xff0000,
+      g1 = color2 & 0x00ff00,
+      b1 = color2 & 0x0000ff;
     return (
       (Math.floor((r1 - r0) * percentage + r0) & 0xff0000) +
       (Math.floor((g1 - g0) * percentage + g0) & 0x00ff00) +
       (Math.floor((b1 - b0) * percentage + b0) & 0x0000ff)
     );
   }
+  /**
+   * @description Get the mixture of to border(x, y, w, h, radius) 获取两个边框(x,y,w,h)的混合值
+   * @param {{x?:number, y?:number, w?:number, h?:number, radius?:number}} border1 边框1 不一定需要给四个参数
+   * @param {{x?:number, y?:number, w?:number, h?:number, radius?:number}} border2 边框2 不一定需要给四个参数
+   * @param {number} percentage 混合百分比 取值[0,1] 若取0则为border1 取1则为border2
+   * @returns {x?:number, y?:number, w?:number, h?:number, radius?:number} 混合后的边框
+   */
   static getMixBorder(border1, border2, percentage) {
     return {
       x: border1.x + (border2.x - border1.x) * percentage,
       y: border1.y + (border2.y - border1.y) * percentage,
-      x: border1.w + (border2.w - border1.w) * percentage,
-      x: border1.h + (border2.h - border1.h) * percentage,
+      w: border1.w + (border2.w - border1.w) * percentage,
+      h: border1.h + (border2.h - border1.h) * percentage,
+      radius: border1.radius + (border2.radius - border1.radius) * percentage,
     };
   }
 }
@@ -535,10 +622,10 @@ const fx_inside = {
       return x === 0
         ? 0
         : x === 1
-        ? 1
-        : x < 0.5
-        ? Math.pow(2, 20 * x - 10) / 2
-        : (2 - Math.pow(2, -20 * x + 10)) / 2;
+          ? 1
+          : x < 0.5
+            ? Math.pow(2, 20 * x - 10) / 2
+            : (2 - Math.pow(2, -20 * x + 10)) / 2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -578,11 +665,11 @@ const fx_inside = {
     function math_func(x) {
       return x < 0.5
         ? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) /
-            2
+        2
         : (Math.pow(2 * x - 2, 2) *
-            ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) +
-            2) /
-            2;
+          ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) +
+          2) /
+        2;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -591,8 +678,8 @@ const fx_inside = {
       return x === 0
         ? 0
         : x === 1
-        ? 1
-        : -Math.pow(2, 10 * x - 10) * sin(((x * 10 - 10.75) * (2 * Math.PI)) / 3);
+          ? 1
+          : -Math.pow(2, 10 * x - 10) * sin(((x * 10 - 10.75) * (2 * Math.PI)) / 3);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -601,8 +688,8 @@ const fx_inside = {
       return x === 0
         ? 0
         : x === 1
-        ? 1
-        : Math.pow(2, -10 * x) * sin(((x * 10 - 0.75) * (2 * Math.PI)) / 3) + 1;
+          ? 1
+          : Math.pow(2, -10 * x) * sin(((x * 10 - 0.75) * (2 * Math.PI)) / 3) + 1;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -611,12 +698,12 @@ const fx_inside = {
       return x === 0
         ? 0
         : x === 1
-        ? 1
-        : x < 0.5
-        ? -(Math.pow(2, 20 * x - 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) / 2
-        : (Math.pow(2, -20 * x + 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) /
+          ? 1
+          : x < 0.5
+            ? -(Math.pow(2, 20 * x - 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) / 2
+            : (Math.pow(2, -20 * x + 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) /
             2 +
-          1;
+            1;
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -641,3 +728,94 @@ const fx_inside = {
     return begin + (end - begin) * math_func(now_x / max_x);
   },
 };
+
+
+
+const SMOOTH_TIMER_TEST_CIRCLE = 1
+const hmTime = hmSensor.createSensor(hmSensor.id.TIME)
+
+/** 
+ * @description SmoothTimer 稳定计时器 用于解决Zepp OS timer计时器不准的问题
+ * @author CuberQAQ
+ * @date 2022/12/24 于2023/3/8合并至fx.js
+ */
+export class SmoothTimer {
+  /**
+  * @function constructor
+  * @description Create a smooth timer. 创建一个稳定的计时器
+  * @param {number} delay Time to start. 延迟执行的时间。
+  * @param {number} circle The Loop Circle(ms). 循环周期(单位:毫秒)。
+  * @param {(option: any) => void} func Function Callback. 回调函数。
+  * @param {*} option As the param when call the Callback Function. 回调函数的参数
+  * @param {SmoothTimer.modes} mode The mode of smoothTimer. 稳定计时器的模式 @see SmoothTimer.modes
+  * @returns {SmoothTimer} Smooth Timer Object. Will be used when delete timer. 稳定计时器实例，删除计时器时用到
+  * @author CuberQAQ
+  */
+  constructor(delay, circle, func, option, mode) {
+    this._lastUtc_ = hmTime.utc + delay - circle
+    //if (frequency != undefined) { circle = Math.round(1000 / frequency) }
+    if (circle == undefined)
+      return null
+    this.mode = mode || SmoothTimer.modes.DYNAMIC_SMOOTH
+    this._circle_ = circle
+    this._hmTimer_ = timer.createTimer(
+      0,
+      SMOOTH_TIMER_TEST_CIRCLE,
+      param => {
+        // 检测是否到达指定时间
+        if (hmTime.utc - this._lastUtc_ >= circle) { // 到达并执行
+          if (this.mode == SmoothTimer.modes.MAX_LIMIT) {
+            this._lastUtc_ = hmTime.utc - 0.75
+          }
+          else if (this.mode == SmoothTimer.modes.DYNAMIC_SMOOTH) {
+            this._lastUtc_ += circle // 更新上一次执行的时间戳
+          }
+
+          func(param) // 执行
+        }
+        // // 检测是否到达指定时间
+        // while(hmTime.utc - this._lastUtc_ >= circle + SMOOTH_TIMER_SAFE_TIME) { // 到达并执行
+        //   this._lastUtc_ += circle // 更新上一次执行的时间戳
+        //   func(param) // 执行
+        // }
+      },
+      option
+    )
+  }
+}
+
+/**
+ * @description Smooth Timer Mode 稳定计时器运行模式
+ * @property {SmoothTimer.modes} DYNAMIC_SMOOTH 动态稳定 Try to make total callback times smooth 尝试稳定总回调次数
+ * @property {SmoothTimer.modes} MAX_LIMIT: 限制速度 Can't run faster then setting 在限定范围内运行
+ */
+SmoothTimer.modes = {
+  DYNAMIC_SMOOTH: 1, // 动态稳定
+  MAX_LIMIT: 2, // 限制速度
+}
+
+/**
+  * Create a smooth timer.
+  * 创建一个稳定的计时器(若省略mode则用法与Zepp的timer.createTimer用法相同)
+  * @param {number} delay Time to start. 延迟执行的时间。
+  * @param {number} circle The Loop Circle(ms). 循环周期(单位:毫秒)。
+  * @param {(option: any) => void} func Function Callback. 回调函数。
+  * @param {*} option As the param when call the Callback Function. 回调函数的参数
+  * @param {SmoothTimer.modes|undefined} mode The mode of smoothTimer. 稳定计时器的模式 @see SmoothTimer.modes
+  * @returns {SmoothTimer} Smooth Timer Object. Will be used when delete timer. 稳定计时器实例，删除计时器时用到
+  * @author CuberQAQ
+  */
+export function createSmoothTimer(delay, circle, func, option, mode) {
+  return new SmoothTimer(delay, circle, func, option, mode)
+}
+
+/**
+ * Delete a smooth timer.
+ * 删除已启用的稳定计时器 
+ * @param {SmoothTimer} instance Smooth Timer Instance. 已启用的SmoothTimer实例
+ * @returns {boolean} If successfully stop. 是否成功删除
+ */
+export function stopSmoothTimer(instance) {
+  if (instance._hmTimer_) { timer.stopTimer(instance._hmTimer_); return true }
+  return false
+}
