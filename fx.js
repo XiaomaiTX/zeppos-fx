@@ -1,8 +1,8 @@
 /**
  * fx.js
  * @description A library for providing simple animations in ZeppOS. 一个用于在ZeppOS中提供简单动画的库
- * @version 1.0.1
- * @date 2023/03/07
+ * @version 1.0.2
+ * @date 2023/03/11
  * @author CuberQAQ XiaomaiTX
  * @license MIT
  * https://github.com/XiaomaiTX/zppos-fx
@@ -30,7 +30,7 @@
  * It also provides a @function getMixColor() designed for color gradients, which can get the middle color of two colors.
  * 还提供了一个专为颜色渐变设计的函数getMixColor，可以获取两个颜色的中间色
  */
-
+import { SmoothTimer, createSmoothTimer, stopSmoothTimer } from "./smoothTimer";
 
 const bounceOut = function (x) {
   /**
@@ -329,7 +329,7 @@ export class Fx {
     }
   }
   registerTimer() {
-    this.timer = timer.createTimer(
+    this.timer = new createSmoothTimer(
       this.delay ? this.delay : 0,
       this.per_clock,
       (option) => {
@@ -342,7 +342,7 @@ export class Fx {
             this.onStop();
           }
           //停止timer
-          timer.stopTimer(this.timer);
+          stopSmoothTimer(this.timer);
           this.timer = null;
           this.enable = false;
         }
@@ -570,14 +570,17 @@ const fx_inside = {
   },
   EASE_OUT_BACK: function (now_x, begin, end, max_x) {
     function math_func(x) {
-      return 1 + 1.70158 + 1 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2);
+      return (
+        1 + 1.70158 + 1 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2)
+      );
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
   EASE_IN_OUT_BACK: function (now_x, begin, end, max_x) {
     function math_func(x) {
       return x < 0.5
-        ? (Math.pow(2 * x, 2) * ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) /
+        ? (Math.pow(2 * x, 2) *
+            ((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) /
             2
         : (Math.pow(2 * x - 2, 2) *
             ((1.70158 * 1.525 + 1) * (x * 2 - 2) + 1.70158 * 1.525) +
@@ -592,7 +595,8 @@ const fx_inside = {
         ? 0
         : x === 1
         ? 1
-        : -Math.pow(2, 10 * x - 10) * sin(((x * 10 - 10.75) * (2 * Math.PI)) / 3);
+        : -Math.pow(2, 10 * x - 10) *
+          sin(((x * 10 - 10.75) * (2 * Math.PI)) / 3);
     }
     return begin + (end - begin) * math_func(now_x / max_x);
   },
@@ -613,8 +617,12 @@ const fx_inside = {
         : x === 1
         ? 1
         : x < 0.5
-        ? -(Math.pow(2, 20 * x - 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) / 2
-        : (Math.pow(2, -20 * x + 10) * sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) /
+        ? -(
+            Math.pow(2, 20 * x - 10) *
+            sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)
+          ) / 2
+        : (Math.pow(2, -20 * x + 10) *
+            sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) /
             2 +
           1;
     }
