@@ -1,11 +1,11 @@
 /**
  * fx.js
  * @description A library for providing simple animations in ZeppOS. 一个用于在ZeppOS中提供简单动画的库
- * @version 1.0.2
- * @date 2023/03/11
+ * @version 1.0.3
+ * @date 2023/03/15
  * @author CuberQAQ XiaomaiTX
  * @license MIT
- * https://github.com/XiaomaiTX/zppos-fx
+ * https://github.com/XiaomaiTX/zeppos-fx
  *
  * @class Fx Animations
  * Provides two ways to use the preset and not to use the preset. 提供了使用预设和不使用预设两种方式
@@ -29,7 +29,55 @@
  * @function getMixColor()
  * It also provides a @function getMixColor() designed for color gradients, which can get the middle color of two colors.
  * 还提供了一个专为颜色渐变设计的函数getMixColor，可以获取两个颜色的中间色
- */
+ * @example ```js
+ * let rect = hmUI.createWidget(hmUI.widget.FILL_RECT, {
+ *   x: 0,
+ *   y: 0,
+ *   w: 50,
+ *   h: 100,
+ *   radius: 10,
+ *   color: 0xff3232,
+ * });
+ * let fx = new Fx({
+ *   begin: 0, // 初始函数值
+ *   end: 1, // 结束函数值
+ *   fps: 60, // 帧率
+ *   time: 1, // 总时长(秒)
+ *   style: Fx.Styles.EASE_IN_OUT_QUAD, // 预设类型 见注释第7-9行
+ *   onStop() {
+ *     console.log("anim stop");
+ *   }, // 动画结束后的回调函数
+ *   // 每一帧的回调函数，参数为当前函数值，取值范围为[begin, end]
+ *   func: (result) => {
+ *     rect.setProperty(
+ *       hmUI.prop.COLOR,
+ *       Fx.getMixColor(0xff3232, 0x3232ff, result)
+ *     );
+ *     rect.setProperty(hmUI.prop.MORE, {
+ *       ...Fx.getMixBorder(
+ *         {
+ *           x: 0,
+ *           y: 0,
+ *           w: 50,
+ *           h: 100,
+ *           radius: 10,
+ *         },
+ *         {
+ *           x: 150,
+ *           y: 200,
+ *           w: 200,
+ *           h: 250,
+ *           radius: 75
+ *         },
+ *         result
+ *       ),
+ *     });
+ *   },
+ *   // useSmoothTimer: false // 若不需要稳定的计时器可取消注释
+ * });
+ * fx.restart(); // 播放动画 可以重复多次调用
+ * ```
+ *  */
 import { SmoothTimer, createSmoothTimer, stopSmoothTimer } from "./smoothTimer";
 
 const bounceOut = function (x) {
@@ -350,36 +398,43 @@ export class Fx {
       {}
     );
   }
-  static getMixColor(color0, color1, percentage) {
-    /**
+  /**
      * @function getMixColor()
      * @description Get the middle color of two colors.
-     * @param {string} Mix color 1. 初始颜色1 (6位十六进制)
-     * @param {string} Mix color 2. 初始颜色2 (6位十六进制)
-     * @param {number} Mix Percentage(range [0,1], the smaller the closer to color0). 混合百分比(范围[0,1]，越小越接近color0)
+     * @param {number} color 1. 初始颜色1 (6位十六进制)
+     * @param {number} color 2. 初始颜色2 (6位十六进制)
+     * @param {number} percentage (range [0,1], the smaller the closer to color0). 混合百分比(范围[0,1]，越小越接近color0)
      */
-    let r0 = color0 & 0xff0000,
-      g0 = color0 & 0x00ff00,
-      b0 = color0 & 0x0000ff;
-    let r1 = color1 & 0xff0000,
-      g1 = color1 & 0x00ff00,
-      b1 = color1 & 0x0000ff;
+  static getMixColor(color1, color2, percentage) {
+    let r0 = color1 & 0xff0000,
+      g0 = color1 & 0x00ff00,
+      b0 = color1 & 0x0000ff;
+    let r1 = color2 & 0xff0000,
+      g1 = color2 & 0x00ff00,
+      b1 = color2 & 0x0000ff;
     return (
       (Math.floor((r1 - r0) * percentage + r0) & 0xff0000) +
       (Math.floor((g1 - g0) * percentage + g0) & 0x00ff00) +
       (Math.floor((b1 - b0) * percentage + b0) & 0x0000ff)
     );
   }
+  /**
+   * @description Get the mixture of to border(x, y, w, h, radius) 获取两个边框(x,y,w,h)的混合值
+   * @param {{x?:number, y?:number, w?:number, h?:number, radius?:number}} border1 边框1 不一定需要给四个参数
+   * @param {{x?:number, y?:number, w?:number, h?:number, radius?:number}} border2 边框2 不一定需要给四个参数
+   * @param {number} percentage 混合百分比 取值[0,1] 若取0则为border1 取1则为border2
+   * @returns {x?:number, y?:number, w?:number, h?:number, radius?:number} 混合后的边框
+   */
   static getMixBorder(border1, border2, percentage) {
     return {
       x: border1.x + (border2.x - border1.x) * percentage,
       y: border1.y + (border2.y - border1.y) * percentage,
-      x: border1.w + (border2.w - border1.w) * percentage,
-      x: border1.h + (border2.h - border1.h) * percentage,
+      w: border1.w + (border2.w - border1.w) * percentage,
+      h: border1.h + (border2.h - border1.h) * percentage,
+      radius: border1.radius + (border2.radius - border1.radius) * percentage,
     };
   }
-}
-Fx.Styles = {
+}Fx.Styles = {
   /**
    * List of preset styles
    * @example EXAMPLE: indexNumber,
