@@ -1,7 +1,7 @@
 /**
  * fx.js
  * @description A library for providing simple animations in ZeppOS. 一个用于在ZeppOS中提供简单动画的库
- * @version 1.0.3
+ * @version 1.0.4
  * @date 2023/03/15
  * @author CuberQAQ XiaomaiTX
  * @license MIT
