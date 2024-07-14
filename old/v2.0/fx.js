@@ -403,7 +403,7 @@ export class Fx {
 		}
 	}
 	registerTimer() {
-        /*
+		/*
 		this.timer = new createSmoothTimer(
 			this.delay ? this.delay : 0,
 			this.per_clock,

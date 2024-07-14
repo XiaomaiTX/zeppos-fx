@@ -1,0 +1,4 @@
+
+
+msgid "example"
+msgstr "範例"
