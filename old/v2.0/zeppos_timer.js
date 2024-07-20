@@ -18,6 +18,7 @@ export class ZeppTimer {
         this.startTime = null;
         this.nextTick = null;
         this.time = new Time();
+        this.stopped = false
     }
 
     start(delay = 0) {
@@ -27,10 +28,12 @@ export class ZeppTimer {
     }
 
     stop() {
-        clearTimeout(this.timerId);
+        this.stopped = true
+        this.timerId && clearTimeout(this.timerId);
     }
 
     scheduleTick() {
+        if(this.stopped) return;
         const currentTime = this.time.getTime();
         const delay = Math.max(0, this.nextTick - currentTime);
         this.timerId = setTimeout(() => {

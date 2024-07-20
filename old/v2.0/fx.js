@@ -397,7 +397,7 @@ export class Fx {
 			this.registerTimer();
 		} else {
 			if (this.timer) {
-				timer.stopTimer(this.timer);
+				this.timer.stop();
 				this.timer = null;
 			}
 		}
