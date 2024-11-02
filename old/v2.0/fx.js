@@ -397,13 +397,13 @@ export class Fx {
 			this.registerTimer();
 		} else {
 			if (this.timer) {
-				timer.stopTimer(this.timer);
+				this.timer.stop();
 				this.timer = null;
 			}
 		}
 	}
 	registerTimer() {
-        /*
+		/*
 		this.timer = new createSmoothTimer(
 			this.delay ? this.delay : 0,
 			this.per_clock,
