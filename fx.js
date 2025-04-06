@@ -1,448 +1,524 @@
 /**
  * fx.js
- * @description A library for providing simple animations in ZeppOS. 一个用于在ZeppOS中提供简单动画的库
- * @version 2.0.0
- * @date 2023/03/15
+ * @description 一个用于在ZeppOS中提供简单动画的库
+ * @version 2.0.1
+ * @date 2025/04/06
+ * @author CuberQAQ XiaomaiTX
+ * @license MIT
+ * @repository https://github.com/XiaomaiTX/zeppos-fx
+ */
+
+/**
+ * 弹跳函数辅助计算
+ * @param {number} x 输入值 [0,1]
+ * @returns {number} 计算结果
+ * @private
+ */
+const bounceOut = function (x) {
+    const n1 = 7.5625;
+    const d1 = 2.75;
+
+    if (x < 1 / d1) {
+        return n1 * x * x;
+    } else if (x < 2 / d1) {
+        return n1 * (x -= 1.5 / d1) * x + 0.75;
+    } else if (x < 2.5 / d1) {
+        return n1 * (x -= 2.25 / d1) * x + 0.9375;
+    } else {
+        return n1 * (x -= 2.625 / d1) * x + 0.984375;
+    }
+};
+
+/**
+ * 动画类
+ */
+export class Fx {
+    /**
+     * 创建动画实例
+     * @param {Object} options 配置选项
+     * @param {number} [options.delay=0] 延迟执行时间(毫秒)
+     * @param {number} [options.begin=0] 初始函数值
+     * @param {number} [options.end=100] 目标函数值
+     * @param {number} [options.x_start] 自定义函数的开始x坐标
+     * @param {number} [options.x_end] 自定义函数的结束x坐标
+     * @param {number} [options.time=1] 执行总时间(秒)
+     * @param {Function} [options.fx] 自定义x=>y动画函数
+     * @param {Function} options.func 每帧执行的回调函数，参数为当前值
+     * @param {number} [options.fps=60] 动画帧率
+     * @param {boolean} [options.enable=true] 是否启用
+     * @param {number} [options.style=0] 内置预设类型，使用Fx.Styles中的值
+     * @param {Function} [options.onStop] 动画结束后的回调函数
+     */
+    constructor({
+        delay = 0,
+        begin = 0,
+        end = 100,
+        x_start,
+        x_end,
+        time = 1,
+        fx,
+        func,
+        fps = 60,
+        enable = true,
+        style = 0,
+        onStop
+    } = {}) {
+        this.begin = begin;
+        this.end = end;
+        this.fps = fps;
+        this.time = time;
+        this.per_clock = 1000 / fps;
+        this.delay = delay;
+        this.func = func;
+        this.onStop = onStop;
+        this.enable = enable;
+        this.timer = null;
+
+        if (fx) {
+            // 使用自定义函数
+            this.x_start = x_start != null ? x_start * 1.0 : 0;
+            this.x_end = x_end != null ? x_end * 1.0 : 1;
+            this.fx = fx;
+            this.speed = (this.x_end - this.x_start) / (time * fps);
+        } else {
+            // 使用预设样式
+            const styleName = this._getStyleName(style);
+            this.fx = (x) => Fx.Easing[styleName](x, begin, end, fps * time);
+            this.x_start = 0;
+            this.x_end = fps * time;
+            this.speed = 1;
+        }
+
+        this.x_now = this.x_start;
+        
+        if (enable) {
+            this.registerTimer();
+        }
+    }
+
+    /**
+     * 获取样式名称
+     * @param {number} styleValue 样式枚举值
+     * @returns {string} 样式名称
+     * @private
+     */
+    _getStyleName(styleValue) {
+        for (const key in Fx.Styles) {
+            if (Fx.Styles[key] === styleValue) {
+                return key;
+            }
+        }
+        return "LINEAR";
+    }
+
+    /**
+     * 重新开始动画
+     */
+    restart() {
+        this.x_now = this.x_start;
+        if (this.timer) {
+            this.timer.stop();
+            this.timer = null;
+        }
+        this.registerTimer();
+    }
+
+    /**
+     * 设置动画是否启用
+     * @param {boolean} enable 是否启用
+     */
+    setEnable(enable) {
+        if (this.enable === enable) return;
+        
+        this.enable = enable;
+        if (enable) {
+            this.registerTimer();
+        } else if (this.timer) {
+            this.timer.stop();
+            this.timer = null;
+        }
+    }
+
+    /**
+     * 注册定时器
+     * @private
+     */
+    registerTimer() {
+        if (this.timer) {
+            this.timer.stop();
+        }
+        
+        this.timer = new ZeppTimer(() => {
+            // 更新位置
+            this.x_now += this.speed;
+            
+            // 检查是否完成
+            if (this.x_now >= this.x_end) {
+                this.x_now = this.x_end;
+                this.func(this.fx(this.x_end));
+                
+                if (typeof this.onStop === 'function') {
+                    this.onStop();
+                }
+                
+                this.timer.stop();
+                this.timer = null;
+                this.enable = false;
+                return;
+            }
+            
+            // 执行动画回调
+            this.func(this.fx(this.x_now));
+        }, this.per_clock);
+        
+        this.timer.start();
+    }
+    
+    /**
+     * 获取两个颜色的混合色
+     * @param {number} color1 初始颜色1 (6位十六进制)
+     * @param {number} color2 初始颜色2 (6位十六进制)
+     * @param {number} percentage 混合百分比 [0,1]，越小越接近color1
+     * @returns {number} 混合后的颜色
+     */
+    static getMixColor(color1, color2, percentage) {
+        // 提取RGB分量
+        const r1 = (color1 >> 16) & 0xff;
+        const g1 = (color1 >> 8) & 0xff;
+        const b1 = color1 & 0xff;
+        
+        const r2 = (color2 >> 16) & 0xff;
+        const g2 = (color2 >> 8) & 0xff;
+        const b2 = color2 & 0xff;
+        
+        // 计算混合色
+        const r = Math.floor(r1 + (r2 - r1) * percentage);
+        const g = Math.floor(g1 + (g2 - g1) * percentage);
+        const b = Math.floor(b1 + (b2 - b1) * percentage);
+        
+        return (r << 16) | (g << 8) | b;
+    }
+    
+    /**
+     * 获取两个边框的混合值
+     * @param {{x?:number, y?:number, w?:number, h?:number, radius?:number}} border1 边框1
+     * @param {{x?:number, y?:number, w?:number, h?:number, radius?:number}} border2 边框2
+     * @param {number} percentage 混合百分比 [0,1]
+     * @returns {{x:number, y:number, w:number, h:number, radius:number}} 混合后的边框
+     */
+    static getMixBorder(border1, border2, percentage) {
+        return {
+            x: border1.x + (border2.x - border1.x) * percentage,
+            y: border1.y + (border2.y - border1.y) * percentage,
+            w: border1.w + (border2.w - border1.w) * percentage,
+            h: border1.h + (border2.h - border1.h) * percentage,
+            radius: border1.radius + (border2.radius - border1.radius) * percentage,
+        };
+    }
+}
+
+/**
+ * 动画样式预设常量
+ * @enum {number}
+ */
+Fx.Styles = {
+    LINEAR: 0,
+    EASE_IN_SINE: 1,
+    EASE_OUT_SINE: 2,
+    EASE_IN_OUT_SINE: 3,
+    EASE_IN_QUAD: 4,
+    EASE_OUT_QUAD: 5,
+    EASE_IN_OUT_QUAD: 6,
+    EASE_IN_CUBIC: 7,
+    EASE_OUT_CUBIC: 8,
+    EASE_IN_OUT_CUBIC: 9,
+    EASE_IN_QUART: 10,
+    EASE_OUT_QUART: 11,
+    EASE_IN_OUT_QUART: 12,
+    EASE_IN_QUINT: 13,
+    EASE_OUT_QUINT: 14,
+    EASE_IN_OUT_QUINT: 15,
+    EASE_IN_EXPO: 16,
+    EASE_OUT_EXPO: 17,
+    EASE_IN_OUT_EXPO: 18,
+    EASE_IN_CIRC: 19,
+    EASE_OUT_CIRC: 20,
+    EASE_IN_OUT_CIRC: 21,
+    EASE_IN_BACK: 22,
+    EASE_OUT_BACK: 23,
+    EASE_IN_OUT_BACK: 24,
+    EASE_IN_ELASTIC: 25,
+    EASE_OUT_ELASTIC: 26,
+    EASE_IN_OUT_ELASTIC: 27,
+    EASE_IN_BOUNCE: 28,
+    EASE_OUT_BOUNCE: 29,
+    EASE_IN_OUT_BOUNCE: 31,
+};
+
+/**
+ * 缓动函数集合
+ * @see https://easings.net/
+ */
+Fx.Easing = {
+    LINEAR: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * x;
+    },
+    
+    EASE_IN_SINE: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (1 - Math.cos((x * Math.PI) / 2));
+    },
+    
+    EASE_OUT_SINE: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * Math.sin((x * Math.PI) / 2);
+    },
+    
+    EASE_IN_OUT_SINE: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (-(Math.cos(Math.PI * x) - 1) / 2);
+    },
+    
+    EASE_IN_QUAD: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x * x);
+    },
+    
+    EASE_OUT_QUAD: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (1 - (1 - x) * (1 - x));
+    },
+    
+    EASE_IN_OUT_QUAD: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+    },
+    
+    EASE_IN_CUBIC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x * x * x);
+    },
+    
+    EASE_OUT_CUBIC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (1 - Math.pow(1 - x, 3));
+    },
+    
+    EASE_IN_OUT_CUBIC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    },
+    
+    EASE_IN_QUART: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x * x * x * x);
+    },
+    
+    EASE_OUT_QUART: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (1 - Math.pow(1 - x, 4));
+    },
+    
+    EASE_IN_OUT_QUART: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
+    },
+    
+    EASE_IN_QUINT: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x * x * x * x * x);
+    },
+    
+    EASE_OUT_QUINT: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (1 - Math.pow(1 - x, 5));
+    },
+    
+    EASE_IN_OUT_QUINT: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2);
+    },
+    
+    EASE_IN_EXPO: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x === 0 ? 0 : Math.pow(2, 10 * x - 10));
+    },
+    
+    EASE_OUT_EXPO: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
+    },
+    
+    EASE_IN_OUT_EXPO: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (
+            x === 0 ? 0 : 
+            x === 1 ? 1 : 
+            x < 0.5 ? Math.pow(2, 20 * x - 10) / 2 : 
+            (2 - Math.pow(2, -20 * x + 10)) / 2
+        );
+    },
+    
+    EASE_IN_CIRC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (1 - Math.sqrt(1 - Math.pow(x, 2)));
+    },
+    
+    EASE_OUT_CIRC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * Math.sqrt(1 - Math.pow(x - 1, 2));
+    },
+    
+    EASE_IN_OUT_CIRC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (
+            x < 0.5 ? 
+            (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2 : 
+            (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2
+        );
+    },
+    
+    EASE_IN_BACK: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        const c1 = 1.70158;
+        return begin + (end - begin) * (c1 * x * x * x - c1 * x * x);
+    },
+    
+    EASE_OUT_BACK: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        const c1 = 1.70158;
+        return begin + (end - begin) * (1 + c1 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2));
+    },
+    
+    EASE_IN_OUT_BACK: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        const c1 = 1.70158;
+        const c2 = c1 * 1.525;
+        
+        return begin + (end - begin) * (
+            x < 0.5 ?
+            (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2 :
+            (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2
+        );
+    },
+    
+    EASE_IN_ELASTIC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        const c4 = (2 * Math.PI) / 3;
+        
+        return begin + (end - begin) * (
+            x === 0 ? 0 :
+            x === 1 ? 1 :
+            -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * c4)
+        );
+    },
+    
+    EASE_OUT_ELASTIC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        const c4 = (2 * Math.PI) / 3;
+        
+        return begin + (end - begin) * (
+            x === 0 ? 0 :
+            x === 1 ? 1 :
+            Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1
+        );
+    },
+    
+    EASE_IN_OUT_ELASTIC: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        const c5 = (2 * Math.PI) / 4.5;
+        
+        return begin + (end - begin) * (
+            x === 0 ? 0 :
+            x === 1 ? 1 :
+            x < 0.5 ?
+            -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * c5)) / 2 :
+            (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * c5)) / 2 + 1
+        );
+    },
+    
+    EASE_IN_BOUNCE: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (1 - bounceOut(1 - x));
+    },
+    
+    EASE_OUT_BOUNCE: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * bounceOut(x);
+    },
+    
+    EASE_IN_OUT_BOUNCE: function (now_x, begin, end, max_x) {
+        const x = now_x / max_x;
+        return begin + (end - begin) * (
+            x < 0.5 ?
+            (1 - bounceOut(1 - 2 * x)) / 2 :
+            (1 + bounceOut(2 * x - 1)) / 2
+        );
+    },
+};
+
+/**
+ * zeppos-timer.js
+ * @description An accurate timer for ZeppOS. 一个适用于ZeppOS的准确的计时器
+ * @version 1.0.0
+ * @date 2023/04/07
  * @author XiaomaiTX
  * @license MIT
- * https://github.com/XiaomaiTX/zeppos-fx
+ * https://github.com/XiaomaiTX/zeppos-timer
  *
- *  */
+ * */
+import { Time } from "@zos/sensor";
 
-function normalGetTime() {
-	switch (zosAPILevel) {
-		case "2.0":
-			return new Time().getTime();
-		case "1.0":
-			return new Date().getTime();
-	}
-	return;
+class ZeppTimer {
+    constructor(callback, interval) {
+        this.callback = callback;
+        this.interval = interval;
+        this.timerId = null;
+        this.startTime = null;
+        this.nextTick = null;
+        this.time = new Time();
+        this.stopped = false
+    }
+
+    start(delay = 0) {
+        this.startTime = this.time.getTime() + delay;
+        this.nextTick = this.startTime + this.interval;
+        this.scheduleTick();
+    }
+
+    stop() {
+        this.stopped = true
+        this.timerId && clearTimeout(this.timerId);
+    }
+
+    scheduleTick() {
+        if(this.stopped) return;
+        const currentTime = this.time.getTime();
+        const delay = Math.max(0, this.nextTick - currentTime);
+        this.timerId = setTimeout(() => {
+            this.tick();
+        }, delay);
+    }
+
+    tick() {
+        const currentTime = this.time.getTime();
+
+        // 计算误差，确保计时器的准确性
+        const error = currentTime - this.nextTick;
+
+        if (error > this.interval) {
+            // 如果误差大于一个间隔时间，则将 nextTick 更新为当前时间
+            this.nextTick = currentTime;
+        } else {
+            // 否则将 nextTick 加上一个间隔时间
+            this.nextTick += this.interval;
+        }
+
+        // 调用回调函数
+        this.callback();
+
+        // 继续调度下一个 tick
+        this.scheduleTick();
+    }
 }
-
-export class Fx {
-	constructor(animProfile, animObj) {
-		this.objects = animObj;
-		this.status = "stop";
-		this.tracks = [];
-		for (let i = 0; i < animProfile.length; i++) {
-			let track = animProfile[i];
-			this.tracks.push(track);
-		}
-		this.progress = [];
-		for (let i = 0; i < this.tracks.length; i++) {
-			this.progress.push(0);
-		}
-
-		this.timers = [];
-	}
-
-	start() {
-		if (this.status !== "stop" && this.status !== "pause") return;
-		this.status = "start";
-		console.log("start fx");
-		for (let i = 0; i < this.tracks.length; i++) {
-			this.scheduleTrack(i);
-		}
-	}
-	scheduleTrack(trackIndex) {
-		// 清理之前的定时器
-		if (this.timers[trackIndex]) {
-			clearTimeout(this.timers[trackIndex]);
-		}
-
-		let track = this.tracks[trackIndex];
-		let progress = this.progress[trackIndex];
-		const executeEffect = () => {
-			const currentEffect = track[progress];
-			FxInside.fx(
-				currentEffect.props.fps,
-				currentEffect.props.duration,
-				currentEffect.props.fx_style,
-				currentEffect.func,
-				currentEffect.onStop,
-				"static delay"
-			);
-			if (
-				currentEffect.props.repeat === true &&
-				progress === track.length - 1
-			) {
-				progress = 0;
-			} else {
-				progress++;
-			}
-			this.progress[trackIndex] = progress;
-			// 如果已经到达最后一个效果并且不需要重复，则停止调度
-			if (progress < track.length) {
-				this.timers[trackIndex] = setTimeout(
-					executeEffect,
-					track[progress].props.startTime * 1000
-				);
-			}
-		};
-		this.timers[trackIndex] = setTimeout(
-			executeEffect,
-			track[progress].props.startTime * 1000
-		);
-	}
-	pause() {
-		if (this.status !== "start") return;
-		this.status = "pause";
-		this.timers.forEach((timer) => clearTimeout(timer));
-	}
-	stop() {
-		this.status = "stop";
-		this.timers.forEach((timer) => clearTimeout(timer));
-		this.progress = this.tracks.map(() => 0);
-	}
-	restart() {
-		if (this.status != "stop" && this.status != "pause") return;
-		this.status = "start";
-		this.progress = 0;
-		this.start();
-	}
-
-	status() {
-		return this.status;
-	}
-	static Styles = {
-		LINEAR: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_SINE: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1 - cos((x * Math.PI) / 2);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_SINE: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return sin((x * Math.PI) / 2);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_SINE: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return -(cos(Math.PI * x) - 1) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_QUAD: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x * x;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_QUAD: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1 - (1 - x) * (1 - x);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_QUAD: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_CUBIC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x * x * x;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_CUBIC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1 - Math.pow(1 - x, 3);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_CUBIC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x < 0.5
-					? 4 * x * x * x
-					: 1 - Math.pow(-2 * x + 2, 3) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_QUART: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x * x * x * x;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_QUART: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1 - Math.pow(1 - x, 4);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_QUART: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x < 0.5
-					? 8 * x * x * x * x
-					: 1 - Math.pow(-2 * x + 2, 4) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_QUINT: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x * x * x * x * x;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_QUINT: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1 - Math.pow(1 - x, 4);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_QUINT: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x < 0.5
-					? 16 * x * x * x * x * x
-					: 1 - Math.pow(-2 * x + 2, 5) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_EXPO: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x === 0 ? 0 : Math.pow(2, 10 * x - 10);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_EXPO: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_EXPO: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x === 0
-					? 0
-					: x === 1
-					? 1
-					: x < 0.5
-					? Math.pow(2, 20 * x - 10) / 2
-					: (2 - Math.pow(2, -20 * x + 10)) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_CIRC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1 - Math.sqrt(1 - Math.pow(x, 2));
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_CIRC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return Math.sqrt(1 - Math.pow(x - 1, 2));
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_CIRC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x < 0.5
-					? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
-					: (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_BACK: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1.70158 + 1 * x * x * x - 1.70158 * x * x;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_BACK: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return (
-					1 +
-					1.70158 +
-					1 * Math.pow(x - 1, 3) +
-					1.70158 * Math.pow(x - 1, 2)
-				);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_BACK: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x < 0.5
-					? (Math.pow(2 * x, 2) *
-							((1.70158 * 1.525 + 1) * 2 * x - 1.70158 * 1.525)) /
-							2
-					: (Math.pow(2 * x - 2, 2) *
-							((1.70158 * 1.525 + 1) * (x * 2 - 2) +
-								1.70158 * 1.525) +
-							2) /
-							2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_ELASTIC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x === 0
-					? 0
-					: x === 1
-					? 1
-					: -Math.pow(2, 10 * x - 10) *
-					  sin(((x * 10 - 10.75) * (2 * Math.PI)) / 3);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_ELASTIC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x === 0
-					? 0
-					: x === 1
-					? 1
-					: Math.pow(2, -10 * x) *
-							sin(((x * 10 - 0.75) * (2 * Math.PI)) / 3) +
-					  1;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_ELASTIC: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x === 0
-					? 0
-					: x === 1
-					? 1
-					: x < 0.5
-					? -(
-							Math.pow(2, 20 * x - 10) *
-							sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)
-					  ) / 2
-					: (Math.pow(2, -20 * x + 10) *
-							sin(((20 * x - 11.125) * (2 * Math.PI)) / 4.5)) /
-							2 +
-					  1;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_BOUNCE: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return 1 - bounceOut(1 - x);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_OUT_BOUNCE: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return bounceOut(x);
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-		EASE_IN_OUT_BOUNCE: function (now_x, begin, end, max_x) {
-			function math_func(x) {
-				return x < 0.5
-					? (1 - bounceOut(1 - 2 * x)) / 2
-					: (1 + bounceOut(2 * x - 1)) / 2;
-			}
-			return begin + (end - begin) * math_func(now_x / max_x);
-		},
-	};
-}
-
-class FxInside {
-	constructor() {}
-	static fx(fps, duration, fx_style, callback, onStop, mode) {
-		this.x_now = 0;
-		this.per_clock = 1000 / fps;
-		console.log("per_clock", this.per_clock);
-		console.log("mode", mode);
-		switch (mode) {
-			case "static delay":
-				let timer = setInterval(() => {
-					callback(fx_style((this.x_now += 1), 0, 1, fps * duration));
-					if (this.x_now >= fps * duration) {
-						clearInterval(timer);
-						timer = null;
-
-						if (onStop != undefined) {
-							onStop(
-								fx_style(fps * duration, 0, 1, fps * duration)
-							);
-						}
-					}
-				}, per_clock);
-
-				break;
-
-			case "dynamic delay":
-				(function loop() {
-					timer = setTimeout(() => {
-						callback(
-							fx_style((this.x_now += 1), 0, 1, fps * duration)
-						);
-						if (this.x_now > fps * duration) {
-							if (onStop != undefined) {
-								onStop();
-								clearTimeout(timer);
-								timer = null;
-							}
-						}
-
-						loop();
-					}, per_clock);
-				})();
-
-				break;
-		}
-	}
-}
-
-// class Timer {
-// 	constructor(callback, interval, errorAdjustmentInterval = 1000) {
-// 		this.callback = callback; // 要执行的回调函数
-// 		this.interval = interval; // 计时器的间隔时间，以毫秒为单位
-// 		this.timerId = null; // 保存计时器的 ID，用于停止计时器
-// 		this.startTime = null; // 计时器的开始时间
-// 		this.nextTick = null; // 下一次 tick（执行回调）的时间点
-// 		this.errorAdjustmentInterval = errorAdjustmentInterval; // 误差调整间隔
-// 		this.lastAdjustmentTime = null; // 上一次误差调整的时间点
-// 		this.drift = 0; // 累积的误差
-// 	}
-// 	start(delay = 0) {
-// 		this.startTime = normalGetTime() + delay; // 设置开始时间，加上可选的延迟
-// 		this.nextTick = this.startTime + this.interval; // 计算第一次 tick 的时间点
-// 		this.lastAdjustmentTime = this.startTime; // 初始化上一次误差调整的时间点
-
-// 		this.timerId = setInterval(() => {
-// 			this.tick();
-// 		}, this.interval);
-// 	}
-// 	stop() {
-// 		clearInterval(this.timerId);
-// 		this.timerId = null;
-// 		this.timer = null;
-// 	}
-// 	tick() {
-// 		const currentTime = normalGetTime();
-
-// 		// 执行回调
-// 		this.callback();
-
-// 		// 更新下一次 tick 的时间点
-// 		this.nextTick += this.interval;
-
-// 		// 检查是否需要调整误差
-// 		if (
-// 			currentTime - this.lastAdjustmentTime >=
-// 			this.errorAdjustmentInterval
-// 		) {
-// 			// 计算误差
-// 			const drift = currentTime - this.nextTick + this.interval;
-// 			this.nextTick += drift; // 调整下一次 tick 的时间点
-// 			this.lastAdjustmentTime = currentTime; // 更新上一次误差调整的时间点
-
-// 			// 清除并重新启动计时器，以适应误差调整后的间隔
-// 			clearInterval(this.timerId);
-// 			this.timerId = setInterval(() => {
-// 				this.tick();
-// 			}, this.interval);
-// 		}
-// 	}
-// }
