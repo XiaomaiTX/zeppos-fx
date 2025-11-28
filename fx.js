@@ -1,8 +1,8 @@
 /**
  * fx.js
  * @description 一个用于在ZeppOS中提供简单动画的库
- * @version 2.0.1
- * @date 2025/04/06
+ * @version 2.0.2
+ * @date 2025/11/28
  * @author CuberQAQ XiaomaiTX
  * @license MIT
  * @repository https://github.com/XiaomaiTX/zeppos-fx
@@ -61,7 +61,7 @@ export class Fx {
         fps = 60,
         enable = true,
         style = 0,
-        onStop
+        onStop,
     } = {}) {
         this.begin = begin;
         this.end = end;
@@ -90,7 +90,7 @@ export class Fx {
         }
 
         this.x_now = this.x_start;
-        
+
         if (enable) {
             this.registerTimer();
         }
@@ -120,6 +120,7 @@ export class Fx {
             this.timer.stop();
             this.timer = null;
         }
+        this.setEnable(true);
         this.registerTimer();
     }
 
@@ -129,7 +130,7 @@ export class Fx {
      */
     setEnable(enable) {
         if (this.enable === enable) return;
-        
+
         this.enable = enable;
         if (enable) {
             this.registerTimer();
@@ -147,33 +148,32 @@ export class Fx {
         if (this.timer) {
             this.timer.stop();
         }
-        
+
         this.timer = new ZeppTimer(() => {
             // 更新位置
             this.x_now += this.speed;
-            
+
             // 检查是否完成
             if (this.x_now >= this.x_end) {
                 this.x_now = this.x_end;
                 this.func(this.fx(this.x_end));
-                
-                if (typeof this.onStop === 'function') {
-                    this.onStop();
-                }
-                
+
                 this.timer.stop();
                 this.timer = null;
                 this.enable = false;
+                if (typeof this.onStop === "function") {
+                    this.onStop();
+                }
                 return;
             }
-            
+
             // 执行动画回调
             this.func(this.fx(this.x_now));
         }, this.per_clock);
-        
+
         this.timer.start();
     }
-    
+
     /**
      * 获取两个颜色的混合色
      * @param {number} color1 初始颜色1 (6位十六进制)
@@ -186,19 +186,43 @@ export class Fx {
         const r1 = (color1 >> 16) & 0xff;
         const g1 = (color1 >> 8) & 0xff;
         const b1 = color1 & 0xff;
-        
+
         const r2 = (color2 >> 16) & 0xff;
         const g2 = (color2 >> 8) & 0xff;
         const b2 = color2 & 0xff;
-        
+
         // 计算混合色
         const r = Math.floor(r1 + (r2 - r1) * percentage);
         const g = Math.floor(g1 + (g2 - g1) * percentage);
         const b = Math.floor(b1 + (b2 - b1) * percentage);
-        
+
         return (r << 16) | (g << 8) | b;
     }
-    
+
+    static getRainbowColor(percentage) {
+        const colors = [
+            0xff0000, // 红色
+            0xffff00, // 黄色
+            0x00ff00, // 绿色
+            0x00ffff, // 青色
+            0x0000ff, // 蓝色
+            0xff00ff, // 紫色
+            0xff0000, // 回到红色，形成循环
+        ];
+        // 根据value值计算当前颜色段
+        const segment = percentage * (colors.length - 1);
+        const colorIndex = Math.floor(segment);
+        const blendRatio = segment - colorIndex;
+
+        // 获取当前颜色段的两个颜色并进行混合
+        const currentColor = this.getMixColor(
+            colors[colorIndex],
+            colors[colorIndex + 1],
+            blendRatio
+        );
+        return currentColor;
+    }
+
     /**
      * 获取两个边框的混合值
      * @param {{x?:number, y?:number, w?:number, h?:number, radius?:number}} border1 边框1
@@ -212,7 +236,8 @@ export class Fx {
             y: border1.y + (border2.y - border1.y) * percentage,
             w: border1.w + (border2.w - border1.w) * percentage,
             h: border1.h + (border2.h - border1.h) * percentage,
-            radius: border1.radius + (border2.radius - border1.radius) * percentage,
+            radius:
+                border1.radius + (border2.radius - border1.radius) * percentage,
         };
     }
 }
@@ -264,196 +289,250 @@ Fx.Easing = {
         const x = now_x / max_x;
         return begin + (end - begin) * x;
     },
-    
+
     EASE_IN_SINE: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (1 - Math.cos((x * Math.PI) / 2));
     },
-    
+
     EASE_OUT_SINE: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * Math.sin((x * Math.PI) / 2);
     },
-    
+
     EASE_IN_OUT_SINE: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (-(Math.cos(Math.PI * x) - 1) / 2);
     },
-    
+
     EASE_IN_QUAD: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (x * x);
     },
-    
+
     EASE_OUT_QUAD: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (1 - (1 - x) * (1 - x));
     },
-    
+
     EASE_IN_OUT_QUAD: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
-        return begin + (end - begin) * (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+        return (
+            begin +
+            (end - begin) *
+                (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2)
+        );
     },
-    
+
     EASE_IN_CUBIC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (x * x * x);
     },
-    
+
     EASE_OUT_CUBIC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (1 - Math.pow(1 - x, 3));
     },
-    
+
     EASE_IN_OUT_CUBIC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
-        return begin + (end - begin) * (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+        return (
+            begin +
+            (end - begin) *
+                (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2)
+        );
     },
-    
+
     EASE_IN_QUART: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (x * x * x * x);
     },
-    
+
     EASE_OUT_QUART: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (1 - Math.pow(1 - x, 4));
     },
-    
+
     EASE_IN_OUT_QUART: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
-        return begin + (end - begin) * (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
+        return (
+            begin +
+            (end - begin) *
+                (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2)
+        );
     },
-    
+
     EASE_IN_QUINT: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (x * x * x * x * x);
     },
-    
+
     EASE_OUT_QUINT: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (1 - Math.pow(1 - x, 5));
     },
-    
+
     EASE_IN_OUT_QUINT: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
-        return begin + (end - begin) * (x < 0.5 ? 16 * x * x * x * x * x : 1 - Math.pow(-2 * x + 2, 5) / 2);
+        return (
+            begin +
+            (end - begin) *
+                (x < 0.5
+                    ? 16 * x * x * x * x * x
+                    : 1 - Math.pow(-2 * x + 2, 5) / 2)
+        );
     },
-    
+
     EASE_IN_EXPO: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (x === 0 ? 0 : Math.pow(2, 10 * x - 10));
     },
-    
+
     EASE_OUT_EXPO: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (x === 1 ? 1 : 1 - Math.pow(2, -10 * x));
     },
-    
+
     EASE_IN_OUT_EXPO: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
-        return begin + (end - begin) * (
-            x === 0 ? 0 : 
-            x === 1 ? 1 : 
-            x < 0.5 ? Math.pow(2, 20 * x - 10) / 2 : 
-            (2 - Math.pow(2, -20 * x + 10)) / 2
+        return (
+            begin +
+            (end - begin) *
+                (x === 0
+                    ? 0
+                    : x === 1
+                    ? 1
+                    : x < 0.5
+                    ? Math.pow(2, 20 * x - 10) / 2
+                    : (2 - Math.pow(2, -20 * x + 10)) / 2)
         );
     },
-    
+
     EASE_IN_CIRC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (1 - Math.sqrt(1 - Math.pow(x, 2)));
     },
-    
+
     EASE_OUT_CIRC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * Math.sqrt(1 - Math.pow(x - 1, 2));
     },
-    
+
     EASE_IN_OUT_CIRC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
-        return begin + (end - begin) * (
-            x < 0.5 ? 
-            (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2 : 
-            (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2
+        return (
+            begin +
+            (end - begin) *
+                (x < 0.5
+                    ? (1 - Math.sqrt(1 - Math.pow(2 * x, 2))) / 2
+                    : (Math.sqrt(1 - Math.pow(-2 * x + 2, 2)) + 1) / 2)
         );
     },
-    
+
     EASE_IN_BACK: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         const c1 = 1.70158;
         return begin + (end - begin) * (c1 * x * x * x - c1 * x * x);
     },
-    
+
     EASE_OUT_BACK: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         const c1 = 1.70158;
-        return begin + (end - begin) * (1 + c1 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2));
+        return (
+            begin +
+            (end - begin) *
+                (1 + c1 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2))
+        );
     },
-    
+
     EASE_IN_OUT_BACK: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         const c1 = 1.70158;
         const c2 = c1 * 1.525;
-        
-        return begin + (end - begin) * (
-            x < 0.5 ?
-            (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2 :
-            (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) + 2) / 2
+
+        return (
+            begin +
+            (end - begin) *
+                (x < 0.5
+                    ? (Math.pow(2 * x, 2) * ((c2 + 1) * 2 * x - c2)) / 2
+                    : (Math.pow(2 * x - 2, 2) * ((c2 + 1) * (x * 2 - 2) + c2) +
+                          2) /
+                      2)
         );
     },
-    
+
     EASE_IN_ELASTIC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         const c4 = (2 * Math.PI) / 3;
-        
-        return begin + (end - begin) * (
-            x === 0 ? 0 :
-            x === 1 ? 1 :
-            -Math.pow(2, 10 * x - 10) * Math.sin((x * 10 - 10.75) * c4)
+
+        return (
+            begin +
+            (end - begin) *
+                (x === 0
+                    ? 0
+                    : x === 1
+                    ? 1
+                    : -Math.pow(2, 10 * x - 10) *
+                      Math.sin((x * 10 - 10.75) * c4))
         );
     },
-    
+
     EASE_OUT_ELASTIC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         const c4 = (2 * Math.PI) / 3;
-        
-        return begin + (end - begin) * (
-            x === 0 ? 0 :
-            x === 1 ? 1 :
-            Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1
+
+        return (
+            begin +
+            (end - begin) *
+                (x === 0
+                    ? 0
+                    : x === 1
+                    ? 1
+                    : Math.pow(2, -10 * x) * Math.sin((x * 10 - 0.75) * c4) + 1)
         );
     },
-    
+
     EASE_IN_OUT_ELASTIC: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         const c5 = (2 * Math.PI) / 4.5;
-        
-        return begin + (end - begin) * (
-            x === 0 ? 0 :
-            x === 1 ? 1 :
-            x < 0.5 ?
-            -(Math.pow(2, 20 * x - 10) * Math.sin((20 * x - 11.125) * c5)) / 2 :
-            (Math.pow(2, -20 * x + 10) * Math.sin((20 * x - 11.125) * c5)) / 2 + 1
+
+        return (
+            begin +
+            (end - begin) *
+                (x === 0
+                    ? 0
+                    : x === 1
+                    ? 1
+                    : x < 0.5
+                    ? -(
+                          Math.pow(2, 20 * x - 10) *
+                          Math.sin((20 * x - 11.125) * c5)
+                      ) / 2
+                    : (Math.pow(2, -20 * x + 10) *
+                          Math.sin((20 * x - 11.125) * c5)) /
+                          2 +
+                      1)
         );
     },
-    
+
     EASE_IN_BOUNCE: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * (1 - bounceOut(1 - x));
     },
-    
+
     EASE_OUT_BOUNCE: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
         return begin + (end - begin) * bounceOut(x);
     },
-    
+
     EASE_IN_OUT_BOUNCE: function (now_x, begin, end, max_x) {
         const x = now_x / max_x;
-        return begin + (end - begin) * (
-            x < 0.5 ?
-            (1 - bounceOut(1 - 2 * x)) / 2 :
-            (1 + bounceOut(2 * x - 1)) / 2
+        return (
+            begin +
+            (end - begin) *
+                (x < 0.5
+                    ? (1 - bounceOut(1 - 2 * x)) / 2
+                    : (1 + bounceOut(2 * x - 1)) / 2)
         );
     },
 };
@@ -478,7 +557,7 @@ class ZeppTimer {
         this.startTime = null;
         this.nextTick = null;
         this.time = new Time();
-        this.stopped = false
+        this.stopped = false;
     }
 
     start(delay = 0) {
@@ -488,12 +567,12 @@ class ZeppTimer {
     }
 
     stop() {
-        this.stopped = true
+        this.stopped = true;
         this.timerId && clearTimeout(this.timerId);
     }
 
     scheduleTick() {
-        if(this.stopped) return;
+        if (this.stopped) return;
         const currentTime = this.time.getTime();
         const delay = Math.max(0, this.nextTick - currentTime);
         this.timerId = setTimeout(() => {
