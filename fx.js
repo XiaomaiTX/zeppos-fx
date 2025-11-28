@@ -1,9 +1,7 @@
 /**
  * fx.js
  * @description 一个用于在ZeppOS中提供简单动画的库
- * @version 2.0.2
- * @date 2025/11/28
- * @author CuberQAQ XiaomaiTX
+ * @author XiaomaiTX
  * @license MIT
  * @repository https://github.com/XiaomaiTX/zeppos-fx
  */
@@ -45,7 +43,7 @@ export class Fx {
      * @param {Function} [options.fx] 自定义x=>y动画函数
      * @param {Function} options.func 每帧执行的回调函数，参数为当前值
      * @param {number} [options.fps=60] 动画帧率
-     * @param {boolean} [options.enable=true] 是否启用
+     * @param {boolean} [options.enabled=true] 是否启用
      * @param {number} [options.style=0] 内置预设类型，使用Fx.Styles中的值
      * @param {Function} [options.onStop] 动画结束后的回调函数
      */
@@ -59,7 +57,7 @@ export class Fx {
         fx,
         func,
         fps = 60,
-        enable = true,
+        enabled = false,
         style = 0,
         onStop,
     } = {}) {
@@ -71,7 +69,7 @@ export class Fx {
         this.delay = delay;
         this.func = func;
         this.onStop = onStop;
-        this.enable = enable;
+        this.enabled = enabled;
         this.timer = null;
 
         if (fx) {
@@ -91,7 +89,7 @@ export class Fx {
 
         this.x_now = this.x_start;
 
-        if (enable) {
+        if (enabled) {
             this.registerTimer();
         }
     }
@@ -110,7 +108,29 @@ export class Fx {
         }
         return "LINEAR";
     }
-
+    start() {
+        if (this.timer) {
+            this.timer.stop();
+            this.timer = null;
+        }
+        this.setEnable(true);
+        this.registerTimer();
+    }
+    stop() {
+        this.x_now = this.x_start;
+        if (this.timer) {
+            this.timer.stop();
+            this.timer = null;
+        }
+        this.setEnable(false);
+    }
+    pause() {
+        if (this.timer) {
+            this.timer.stop();
+            this.timer = null;
+        }
+        this.setEnable(false);
+    }
     /**
      * 重新开始动画
      */
@@ -126,13 +146,13 @@ export class Fx {
 
     /**
      * 设置动画是否启用
-     * @param {boolean} enable 是否启用
+     * @param {boolean} enabled 是否启用
      */
-    setEnable(enable) {
-        if (this.enable === enable) return;
+    setEnable(enabled) {
+        if (this.enabled === enabled) return;
 
-        this.enable = enable;
-        if (enable) {
+        this.enabled = enabled;
+        if (enabled) {
             this.registerTimer();
         } else if (this.timer) {
             this.timer.stop();
@@ -160,7 +180,7 @@ export class Fx {
 
                 this.timer.stop();
                 this.timer = null;
-                this.enable = false;
+                this.enabled = false;
                 if (typeof this.onStop === "function") {
                     this.onStop();
                 }
