@@ -1,0 +1,11 @@
+{
+  "originLang": "zh-CN",
+  "targetLangs": [
+    "en-US",
+    "zh-TW",
+    "ru-RU",
+    "fr-FR"
+  ],
+  "workingPath": "./example/page/i18n",
+  "adapter": "Translated"
+}

@@ -1,0 +1,31 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@x1a0ma17x/zeppos-fx':
+        specifier: ^2.0.3
+        version: 2.0.3
+    devDependencies:
+      '@zeppos/device-types':
+        specifier: ^3.0.0
+        version: 3.0.1
+
+packages:
+
+  '@x1a0ma17x/zeppos-fx@2.0.3':
+    resolution: {integrity: sha512-mhZhlWRZjNXyhNrKHHjtp4Z9rOIQhDd5SxDoPIqVwdy8tialvAAe4qjxCcB+tAMYkLgs6CUj9uDmq7ZQZnxwfQ==}
+
+  '@zeppos/device-types@3.0.1':
+    resolution: {integrity: sha512-7rUsKLFiTdwIU3NarEKbEoQjr2X1kE6/8ra+mM3+zXDnwhELPowwC4Sl5UGS71PjTa9Rb+s4WygOHkjeEmJcoA==}
+
+snapshots:
+
+  '@x1a0ma17x/zeppos-fx@2.0.3': {}
+
+  '@zeppos/device-types@3.0.1': {}
