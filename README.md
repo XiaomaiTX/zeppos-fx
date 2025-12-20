@@ -1,11 +1,8 @@
 <a name="readme-top"></a>
 
-
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
+![npm version](https://img.shields.io/npm/v/@x1a0ma17x/zeppos-fx)
+![minified size](https://img.shields.io/bundlephobia/min/@x1a0ma17x/zeppos-fx)
+![license](https://img.shields.io/npm/l/@x1a0ma17x/zeppos-fx)
 
 <br />
 <div align="center">
@@ -13,138 +10,99 @@
     <img src="fx.js.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">fx.js</h3>
+  <h3 align="center">ZeppOS Fx</h3>
 
   <p align="center">
     A library for providing simple animations in ZeppOS. 
     <br />
-    <a href="https://github.com/XiaomaiTX/zeppos-fx/blob/master/README_zh-CN.md"><strong>中文文档（在写了别催了） »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/XiaomaiTX/zeppos-fx/releases">Download</a>
-    ·
-    <a href="https://github.com/XiaomaiTX/zeppos-fx/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/XiaomaiTX/zeppos-fx/issues">Request Feature</a>
+    English | <a href="https://github.com/XiaomaiTX/zeppos-fx/blob/master/README_zh-CN.md"><strong>中文文档</strong></a>
   </p>
 </div>
 
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The fx.js</a>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ol>
-</details>
+This is a flexible, elegant, and high-performance animation library for ZeppOS.
 
+You can effortlessly add various elegant animation effects to existing UI controls.
 
-## About The Project
+Why choose fx.js:
 
-A library for providing simple animations in ZeppOS. 
-You can use simple functions to add animations to your UI widgets
+- ✅ High-performance non-linear animation calculations
 
+- ✅ Extensive animation presets
 
-Here's why:
+- ✅ Complete state control
 
-- In ZeppOS 1.0, there is no official animation interface for the control, so developers need to write their own animation libraries to implement animation features.
-- In order to save your developers' work at the bottom, we have created an animation library for ZeppOS that helps developers to quickly build UI controls with linear or non-linear animations in ZeppOS applets
-- You can also easily add custom animations to your UI widgets
+- ✅ Simply import ZeppOS Fx to implement
 
-Use the <a href="#usage">Usage</a> to easily get started.
+~~In ZeppOS 1.0, the official platform does not provide interfaces for control animations. We believe developers can use this fx library to add engaging animations to ZeppOS 1.0 mini-programs (e.g., developing mini-programs for the Xiaomi Mi Band 7)~~
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+## 🚀 Quick Start
 
+### 📦 Installation
 
-## Getting Started
-
-The content here will help you get familiar with the program quickly.
-
-### Prerequisites
-
-Before using this library, please make sure you already have an understanding of ZeppOS applet development, you can refer to the [ZeppOS official documentation](https://docs.zepp.com/docs/intro/).
-Also, you need a `code editor(Like Microsoft VSCode)` and `knowledge of JavaScript`.
-
-### Installation
-
-1. To use this library, you need to create a ZeppOS applet project first.refer to the [ZeppOS quick start](https://docs.zepp.com/docs/guides/quick-start/).
-
-2. Please download the latest `fx.js` file in the [Releases](https://github.com/XiaomaiTX/zeppos-fx/releases), and place `fx.js` in the `utils/` directory of the root of the applet
-
-3. Add a reference to fx.js in the project
-
-```js
-import { Fx } from "../utils/fx"; // Replace with the path to your fx.js
+```bash
+pnpm install @x1a0ma17x/zeppos-fx
 ```
 
-At this point, you're ready to use the `fx.js` library
+## Usage Guide
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-## Usage
-
-You can refer to the following example to use this library and you should get the expected results like this:
-The position of the text moves from x=100 to x=200 with a non-linear motion effect
+Refer to this simple example: If executed correctly, the text control's x-value should transition from 100 to 200, indicating a nonlinear movement to the right
 
 ```js
-    const text = hmUI.createWidget(hmUI.widget.TEXT, {
-      // create a text widget
-      x: 100,
-      y: 120,
-      w: 288,
-      h: 46,
-      color: 0xffffff,
-      text_size: 36,
-      align_h: hmUI.align.CENTER_H,
-      align_v: hmUI.align.CENTER_V,
-      text_style: hmUI.text_style.NONE,
-      text: 'HELLO ZEPPOS'
-    })
+import * as hmUI from "@zos/ui";
+import { Fx } from "@x1a0ma17x/zeppos-fx";
 
-let fx = new Fx({
-    begin: 100, // Initial value of function.
-    end: 200, // Target value of function. 
-    fps: 60, // FPS. 
-    time: 1, // Total during time (s). 
-     style: Fx.Styles.EASE_IN_OUT_QUAD, // Types of animation presets used, seeing @Fx.Style. 
-     onStop() {
-       console.log("anim stop");
-     }, // Callback function at the end of the animation. 
+Page({
+    build() {
+        const text = hmUI.createWidget(hmUI.widget.TEXT, {
+            // Create a simple TEXT Widget
+            x: 0,
+            y: 120,
+            w: 288,
+            h: 46,
+            color: 0xffffff,
+            text_size: 36,
+            align_h: hmUI.align.CENTER_H,
+            align_v: hmUI.align.CENTER_V,
+            text_style: hmUI.text_style.NONE,
+            text: "HELLO ZEPPOS",
+        });
 
-     // Callback function for each frame, the parameter is the current function value, the value range is [begin, end]
-      func: (result) => text.setProperty(hmUI.prop.X, result),
+        const fx = new Fx({
+            delay: 0, // Delay before execution (in seconds)
+            begin: 0, // Initial function value
+            end: 1, // Final function value
+            fps: 60, // Frame rate (frames per second)
+            time: 1, // Total duration (in seconds)
+            style: Fx.Styles.EASE_IN_OUT_QUAD, // Preset animation style
+            enabled: true, // Whether enabled by default (i.e., animation starts automatically when Fx instance is created)
+            onStop() {
+                // Callback function after animation ends
+                console.log("anim stop");
+            },
+            func: (result) => {
+                // Callback function for each frame, with the current function value (range: [begin, end])
+                text.setProperty(hmUI.prop.X, 300 * result);
+            },
+        });
+
+        // State control
+        fx.start();
+        // fx.pause();
+        // fx.stop();
+    },
 });
-fx.restart(); // Replay animation can be called multiple times. 
 ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 ## Roadmap
 
-- [x] Add basic presets
-- [x] Add function to mix colors
-- [ ] Add more presets
-- [ ] Multi-language Support for README
+- [ ] Dynamic compatibility with ZeppOS API
+- [x] Add state management
+- [x] Add basic animation presets
+- [x] Add color blending animation functions
+- [x] Increase preset options
+- [x] Implement multilingual support for README
   - [x] English
-  - [ ] 中文
-
-See the [open issues](https://github.com/XiaomaiTX/zeppos-fx/issues) for a full list of proposed features (and known issues).
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+  - [x] Chinese
 
 ## Contributing
 
@@ -159,32 +117,6 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-## Contact
-
-XiaomaiTX - i@lenrome.cn
-
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-[contributors-shield]: https://img.shields.io/github/contributors/XiaomaiTX/zeppos-fx.svg?style=for-the-badge
-[contributors-url]: https://github.com/XiaomaiTX/zeppos-fx/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/XiaomaiTX/zeppos-fx.svg?style=for-the-badge
-[forks-url]: https://github.com/XiaomaiTX/zeppos-fx/network/members
-[stars-shield]: https://img.shields.io/github/stars/XiaomaiTX/zeppos-fx.svg?style=for-the-badge
-[stars-url]: https://github.com/XiaomaiTX/zeppos-fx/stargazers
-[issues-shield]: https://img.shields.io/github/issues/XiaomaiTX/zeppos-fx.svg?style=for-the-badge
-[issues-url]: https://github.com/XiaomaiTX/zeppos-fx/issues
-[license-shield]: https://img.shields.io/github/license/XiaomaiTX/zeppos-fx.svg?style=for-the-badge
-[license-url]: https://github.com/XiaomaiTX/zeppos-fx/blob/master/LICENSE.txt
