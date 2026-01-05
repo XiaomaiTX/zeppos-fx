@@ -68,11 +68,11 @@ Page({
         });
 
         const fx = new Fx({
-            delay: 0, // Delay before execution (in seconds)
+            delay: 0, // Delay before execution (in milliseconds)
             begin: 0, // Initial function value
             end: 1, // Final function value
             fps: 60, // Frame rate (frames per second)
-            time: 1, // Total duration (in seconds)
+            time: 1000, // Total duration (in milliseconds)
             style: Fx.Styles.EASE_IN_OUT_QUAD, // Preset animation style
             enabled: true, // Whether enabled by default (i.e., animation starts automatically when Fx instance is created)
             onStop() {

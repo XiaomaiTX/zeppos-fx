@@ -39,7 +39,7 @@ export class Fx {
      * @param {number} [options.end=100] 目标函数值
      * @param {number} [options.x_start] 自定义函数的开始x坐标
      * @param {number} [options.x_end] 自定义函数的结束x坐标
-     * @param {number} [options.time=1] 执行总时间(秒)
+     * @param {number} [options.time=1000] 执行总时间(毫秒)
      * @param {Function} [options.fx] 自定义x=>y动画函数
      * @param {Function} options.func 每帧执行的回调函数，参数为当前值
      * @param {number} [options.fps=60] 动画帧率
@@ -53,7 +53,7 @@ export class Fx {
         end = 100,
         x_start,
         x_end,
-        time = 1,
+        time = 1000,
         fx,
         func,
         fps = 60,
@@ -77,13 +77,13 @@ export class Fx {
             this.x_start = x_start != null ? x_start * 1.0 : 0;
             this.x_end = x_end != null ? x_end * 1.0 : 1;
             this.fx = fx;
-            this.speed = (this.x_end - this.x_start) / (time * fps);
+            this.speed = (this.x_end - this.x_start) / (fps * time / 1000);
         } else {
             // 使用预设样式
             const styleName = this._getStyleName(style);
-            this.fx = (x) => Fx.Easing[styleName](x, begin, end, fps * time);
+            this.fx = (x) => Fx.Easing[styleName](x, begin, end, fps * time / 1000);
             this.x_start = 0;
-            this.x_end = fps * time;
+            this.x_end = fps * time / 1000;
             this.speed = 1;
         }
 
@@ -191,7 +191,7 @@ export class Fx {
             this.func(this.fx(this.x_now));
         }, this.per_clock);
 
-        this.timer.start();
+        this.timer.start(this.delay);
     }
 
     /**

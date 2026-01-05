@@ -18,11 +18,11 @@ Page({
         });
 
         const fx = new Fx({
-            delay: 0, // 延迟执行的时间
+            delay: 0, // 延迟执行的时间(毫秒)
             begin: 0, // 初始函数值
             end: 1, // 结束函数值
             fps: 60, // 帧率
-            time: 1, // 总时长(秒)
+            time: 1000, // 总时长(毫秒)
             style: Fx.Styles.EASE_IN_OUT_QUAD, // 预设类型
             enabled: true, // 是否默认启用（即创建Fx实例时自动启动）
             onStop() {
