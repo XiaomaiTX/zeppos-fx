@@ -8,7 +8,8 @@
     "example": "example"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
     "build": "tsc",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build"
@@ -27,8 +28,11 @@
   },
   "homepage": "https://github.com/XiaomaiTX/zeppos-fx#readme",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.0.3",
     "@zeppos/device-types": "^3.0.1",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   }
 }
