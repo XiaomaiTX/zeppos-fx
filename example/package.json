@@ -12,6 +12,6 @@
     "@zeppos/device-types": "^3.0.0"
   },
   "dependencies": {
-    "@x1a0ma17x/zeppos-fx": "^2.0.3"
+    "@x1a0ma17x/zeppos-fx": "^2.1.0"
   }
 }

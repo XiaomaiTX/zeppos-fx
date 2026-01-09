@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@x1a0ma17x/zeppos-fx':
-        specifier: ^2.0.3
-        version: 2.0.3
+        specifier: ^2.1.0
+        version: 2.1.0
     devDependencies:
       '@zeppos/device-types':
         specifier: ^3.0.0
@@ -18,14 +18,14 @@ importers:
 
 packages:
 
-  '@x1a0ma17x/zeppos-fx@2.0.3':
-    resolution: {integrity: sha512-mhZhlWRZjNXyhNrKHHjtp4Z9rOIQhDd5SxDoPIqVwdy8tialvAAe4qjxCcB+tAMYkLgs6CUj9uDmq7ZQZnxwfQ==}
+  '@x1a0ma17x/zeppos-fx@2.1.0':
+    resolution: {integrity: sha512-SlVF0TekHnl4R3hQGzZPm0SvmlfSqdJqOcNlVTgGPiWGNxMfAUADAI6XPUyy8hlb7CMcGFEi7Hfz2NpfSSVbDw==}
 
   '@zeppos/device-types@3.0.1':
     resolution: {integrity: sha512-7rUsKLFiTdwIU3NarEKbEoQjr2X1kE6/8ra+mM3+zXDnwhELPowwC4Sl5UGS71PjTa9Rb+s4WygOHkjeEmJcoA==}
 
 snapshots:
 
-  '@x1a0ma17x/zeppos-fx@2.0.3': {}
+  '@x1a0ma17x/zeppos-fx@2.1.0': {}
 
   '@zeppos/device-types@3.0.1': {}
